@@ -36,7 +36,7 @@ class JwtUtil
         }
     }
     fun extractUserId(token: String): Long {
-        return getClaims(token)["userId"] as Long
+        return (getClaims(token)["userId"] as Number).toLong()
     }
     fun extractEmail(token: String): String {
         return getClaims(token).subject

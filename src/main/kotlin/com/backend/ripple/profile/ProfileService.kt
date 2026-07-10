@@ -4,17 +4,21 @@ import com.backend.ripple.AlreadyExistsException
 import com.backend.ripple.PrivateUserException
 import com.backend.ripple.ResourceNotFoundException
 import com.backend.ripple.auth.repository.UserRepository
+import com.backend.ripple.dto.ProfileCreationRequest
 import com.backend.ripple.dto.ProfileResponse
 import com.backend.ripple.dto.ProfileUpdateRequest
 import com.backend.ripple.dto.RelationshipStatus
 import com.backend.ripple.model.Profile
+import org.springframework.http.ResponseEntity
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.util.Optional
 
 @Service
 class ProfileService(val profileRepository: ProfileRepository, private val userRepository: UserRepository) {
-    fun createProfile(name: String, bio: String?, profilePic: String?, relationshipStatus: RelationshipStatus?): Profile {
+
+    fun createProfile(profile : ProfileCreationRequest): Profile {
         val userId = SecurityContextHolder.getContext().authentication?.principal as Long
         if (profileRepository.findByUserId(userId).isPresent) {
             throw AlreadyExistsException("Profile already exists")
@@ -22,13 +26,12 @@ class ProfileService(val profileRepository: ProfileRepository, private val userR
         val user = userRepository.findById(userId).orElseThrow { ResourceNotFoundException("User $userId not found") }
         val profile = Profile(
             user = user,
-            name = name,
-            bio = bio,
-            profilePic = profilePic,
-            relationshipStatus = relationshipStatus
+            name = profile.name,
+            bio = profile.bio,
+            profilePic = profile.profilePic,
+            relationshipStatus = profile.relationshipStatus,
         )
-        profileRepository.save(profile)
-        return profile
+        return profileRepository.save(profile)
     }
 
     fun getProfile(userId: Long): ProfileResponse {
@@ -46,11 +49,12 @@ class ProfileService(val profileRepository: ProfileRepository, private val userR
             name = profile.name,
             bio = profile.bio,
             profilePic = profile.profilePic,
-            profile.relationshipStatus
+            relationshipStatus = profile.relationshipStatus,
+            isPrivate = profile.user.isPrivate
         )
     }
-
-    fun updateProfile(profile: ProfileUpdateRequest) {
+    @Transactional
+    fun updateProfile(profile: ProfileUpdateRequest): ProfileResponse {
         val userId = SecurityContextHolder.getContext().authentication?.principal as Long
         val userProfile =
             profileRepository.findByUserId(userId).orElseThrow { ResourceNotFoundException("Profile not found") }
@@ -61,6 +65,13 @@ class ProfileService(val profileRepository: ProfileRepository, private val userR
         userProfile.user.isPrivate = profile.isPrivate
         profileRepository.save(userProfile)
         userRepository.save(userProfile.user)
+        return ProfileResponse(
+            name = userProfile.name,
+            bio = userProfile.bio,
+            profilePic = userProfile.profilePic,
+            relationshipStatus = userProfile.relationshipStatus,
+            isPrivate = userProfile.user.isPrivate
+        )
     }
     fun deleteAccount() {
         val userId = SecurityContextHolder.getContext().authentication?.principal as Long
