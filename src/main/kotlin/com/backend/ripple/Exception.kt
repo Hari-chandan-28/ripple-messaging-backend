@@ -14,3 +14,7 @@ class AlreadyExistsException(message :String) : RuntimeException(message)
 
 @ResponseStatus(HttpStatus.UNAUTHORIZED)
 class UnauthorizedException(message :String) : RuntimeException(message)
+
+@ResponseStatus(HttpStatus.UNAUTHORIZED)
+class PrivateUserException(message :String) : RuntimeException(message)
+

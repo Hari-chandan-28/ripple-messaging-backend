@@ -22,10 +22,9 @@ class JwtFilter (private val jwtUtil: JwtUtil): OncePerRequestFilter() {
             val token = authHeader.removePrefix("Bearer ")
 
             if (jwtUtil.isTokenValid(token)) {
-                val email = jwtUtil.extractEmail(token)
-
+                val userId = jwtUtil.extractUserId(token)
                 val authentication = UsernamePasswordAuthenticationToken(
-                    email, null, emptyList()
+                    userId, null, emptyList()
                 )
                 SecurityContextHolder.getContext().authentication = authentication
             }
