@@ -18,7 +18,7 @@ import java.util.Optional
 @Service
 class ProfileService(val profileRepository: ProfileRepository, private val userRepository: UserRepository) {
 
-    fun createProfile(profile : ProfileCreationRequest): Profile {
+    fun createProfile(profile : ProfileCreationRequest): ProfileResponse {
         val userId = SecurityContextHolder.getContext().authentication?.principal as Long
         if (profileRepository.findByUserId(userId).isPresent) {
             throw AlreadyExistsException("Profile already exists")
@@ -31,7 +31,8 @@ class ProfileService(val profileRepository: ProfileRepository, private val userR
             profilePic = profile.profilePic,
             relationshipStatus = profile.relationshipStatus,
         )
-        return profileRepository.save(profile)
+        val newProfile = profileRepository.save(profile)
+        return toResponse(newProfile)
     }
 
     fun getProfile(userId: Long): ProfileResponse {
@@ -45,13 +46,7 @@ class ProfileService(val profileRepository: ProfileRepository, private val userR
                 throw PrivateUserException("Can't access this resource")
             }
         }
-        return ProfileResponse(
-            name = profile.name,
-            bio = profile.bio,
-            profilePic = profile.profilePic,
-            relationshipStatus = profile.relationshipStatus,
-            isPrivate = profile.user.isPrivate
-        )
+        return toResponse(profile)
     }
     @Transactional
     fun updateProfile(profile: ProfileUpdateRequest): ProfileResponse {
@@ -65,16 +60,19 @@ class ProfileService(val profileRepository: ProfileRepository, private val userR
         userProfile.user.isPrivate = profile.isPrivate
         profileRepository.save(userProfile)
         userRepository.save(userProfile.user)
-        return ProfileResponse(
-            name = userProfile.name,
-            bio = userProfile.bio,
-            profilePic = userProfile.profilePic,
-            relationshipStatus = userProfile.relationshipStatus,
-            isPrivate = userProfile.user.isPrivate
-        )
+        return toResponse(userProfile)
     }
     fun deleteAccount() {
         val userId = SecurityContextHolder.getContext().authentication?.principal as Long
         userRepository.deleteById(userId)
+    }
+    private fun toResponse(profile: Profile): ProfileResponse {
+        return ProfileResponse(
+            name = profile.name,
+            bio = profile.bio,
+            profilePic = profile.profilePic,
+            relationshipStatus = profile.relationshipStatus,
+            isPrivate = profile.user.isPrivate
+        )
     }
 }

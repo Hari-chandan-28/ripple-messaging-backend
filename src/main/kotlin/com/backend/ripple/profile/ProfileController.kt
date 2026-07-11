@@ -22,14 +22,7 @@ class ProfileController (val profileService: ProfileService) {
     fun create(@RequestBody profile: ProfileCreationRequest): ResponseEntity<ProfileResponse>
     {
         val newProfile= profileService.createProfile(profile)
-        val response = ProfileResponse(
-            name = newProfile.name,
-            bio = newProfile.bio,
-            profilePic = newProfile.profilePic,
-            relationshipStatus = newProfile.relationshipStatus,
-            isPrivate = newProfile.user.isPrivate
-        )
-        return ResponseEntity.ok(response)
+        return ResponseEntity.ok(newProfile)
     }
     @GetMapping("/{userId}")
     fun getProfile(@PathVariable userId:Long): ResponseEntity<ProfileResponse>
