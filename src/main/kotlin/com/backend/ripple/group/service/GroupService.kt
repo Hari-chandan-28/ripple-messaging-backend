@@ -91,6 +91,19 @@ class GroupService (private val groupMemberRepository: GroupMemberRepository, pr
         )
     }
     fun removeMember(memberId:Long, groupId:Long){
+        val result = roleBasedTask(memberId,groupId)
+        val member= result[0]
+        groupMemberRepository.delete(member)
+    }
+    fun changeRole(memberId:Long, groupId:Long,role:GroupRole){
+        val result = roleBasedTask(memberId,groupId)
+        val member= result[0]
+        member.role = role
+        groupMemberRepository.save(member)
+
+    }
+    private fun roleBasedTask(memberId:Long, groupId:Long):List<GroupMember>
+    {
         val userId = SecurityContextHolder.getContext().authentication?.principal as Long
         requireAdminOrAbove(groupId, userId)
         val user= groupMemberRepository.findById_GroupIdAndId_MemberId(groupId, userId).orElseThrow { ResourceNotFoundException("User not found") }
@@ -98,9 +111,36 @@ class GroupService (private val groupMemberRepository: GroupMemberRepository, pr
         if(roleRank(user.role) <= roleRank(member.role)) {
             throw AccessDeniedException("You don't have permission to remove this member")
         }
+        return listOf(member,user)
+    }
+    fun leaveGroup(groupId: Long) {
+        val userId = SecurityContextHolder.getContext().authentication?.principal as Long
+        val member = groupMemberRepository.findById_GroupIdAndId_MemberId(groupId, userId)
+            .orElseThrow { ResourceNotFoundException("You are not a member of this group") }
+        if (member.role == GroupRole.OWNER) {
+            throw AccessDeniedException("Owner cannot leave — delete the group or transfer ownership first")
+        }
         groupMemberRepository.delete(member)
     }
 
+    fun getGroupMembers(groupId: Long): List<GroupMemberResponse> {
+        val userId = SecurityContextHolder.getContext().authentication?.principal as Long
+        groupMemberRepository.findById_GroupIdAndId_MemberId(groupId, userId)
+            .orElseThrow { AccessDeniedException("You are not a member of this group") }
+        return groupMemberRepository.findById_GroupId(groupId).map {
+            GroupMemberResponse(it.group.name, it.member.username, it.role)
+        }
+    }
+
+    fun deleteGroup(groupId: Long) {
+        val userId = SecurityContextHolder.getContext().authentication?.principal as Long
+        val member = groupMemberRepository.findById_GroupIdAndId_MemberId(groupId, userId)
+            .orElseThrow { AccessDeniedException("You are not a member of this group") }
+        if (member.role != GroupRole.OWNER) {
+            throw AccessDeniedException("Only the owner can delete the group")
+        }
+        groupRepository.deleteById(groupId)
+    }
 
     private fun requireAdminOrAbove(groupId: Long, userId: Long) {
         val member = groupMemberRepository.findById_GroupIdAndId_MemberId(groupId, userId)
