@@ -11,5 +11,6 @@ interface  UserRepository : JpaRepository<User, Long>{
     fun existsByEmail(email: String): Boolean
     fun existsByUserId(userId: Long): Boolean
     fun findByUserId(userId: Long): Optional<User>
-
+    fun existsByUsername(username: String): Boolean
+    fun findByUsernameContainingIgnoreCaseAndIsPrivate(username: String, isPrivate: Boolean): List<User>
 }

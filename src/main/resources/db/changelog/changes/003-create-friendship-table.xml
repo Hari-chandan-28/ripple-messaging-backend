@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="003" author="harry">
+
+        <createTable tableName="friendship">
+
+            <column name="friendship_id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="sender_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="receiver_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="status" type="INT">
+                <constraints nullable="false"/>
+            </column>
+
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="friendship"
+                baseColumnNames="sender_id"
+                referencedTableName="user"
+                referencedColumnNames="user_id"
+                constraintName="fk_friendship_sender"
+                onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+                baseTableName="friendship"
+                baseColumnNames="receiver_id"
+                referencedTableName="user"
+                referencedColumnNames="user_id"
+                constraintName="fk_friendship_receiver"
+                onDelete="CASCADE"/>
+
+    </changeSet>
+
+</databaseChangeLog>

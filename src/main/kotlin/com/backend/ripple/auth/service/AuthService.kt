@@ -1,5 +1,6 @@
 package com.backend.ripple.auth.service
 
+import com.backend.ripple.AlreadyExistsException
 import com.backend.ripple.ResourceNotFoundException
 import com.backend.ripple.UnauthorizedException
 import com.backend.ripple.auth.repository.UserRepository
@@ -15,13 +16,16 @@ class AuthService (
     private val userRepository: UserRepository,
     private val passwordEncoder: PasswordEncoder
 ) {
-    fun signup (userName :String, email :String, password :String) : String {
+    fun signup (username :String, email :String, password :String) : String {
             if(userRepository.existsByEmail(email))
             {
                 return "Email already registered!";
             }
+            if (userRepository.existsByUsername(username)) {
+            throw AlreadyExistsException("Username already taken")
+            }
             val user = User(
-                username = userName,
+                username = username,
                 email = email,
                 password = passwordEncoder.encode(password)
             )
