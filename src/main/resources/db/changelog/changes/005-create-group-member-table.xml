@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="005" author="harry">
+
+        <createTable tableName="group_member">
+
+            <column name="group_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="member_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="role" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+
+        </createTable>
+
+        <addPrimaryKey
+                tableName="group_member"
+                columnNames="group_id, member_id"
+                constraintName="pk_group_member"/>
+
+        <addForeignKeyConstraint
+                baseTableName="group_member"
+                baseColumnNames="group_id"
+                referencedTableName="groups"
+                referencedColumnNames="group_id"
+                constraintName="fk_group_member_group"
+                onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+                baseTableName="group_member"
+                baseColumnNames="member_id"
+                referencedTableName="user"
+                referencedColumnNames="user_id"
+                constraintName="fk_group_member_user"
+                onDelete="CASCADE"/>
+
+    </changeSet>
+
+</databaseChangeLog>
