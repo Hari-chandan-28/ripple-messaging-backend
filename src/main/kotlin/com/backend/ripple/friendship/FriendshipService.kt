@@ -6,9 +6,9 @@ import com.backend.ripple.auth.repository.UserRepository
 import com.backend.ripple.model.Friendship
 import org.springframework.stereotype.Service
 import com.backend.ripple.ResourceNotFoundException
-import com.backend.ripple.dto.FriendshipResponse
-import com.backend.ripple.dto.RelationshipStatus
-import com.backend.ripple.dto.UserSummaryResponse
+import com.backend.ripple.dto.friendship.FriendshipResponse
+import com.backend.ripple.dto.profile.RelationshipStatus
+import com.backend.ripple.dto.friendship.UserSummaryResponse
 import org.springframework.security.core.context.SecurityContextHolder
 
 @Service

@@ -1,6 +1,6 @@
 package com.backend.ripple.search
 
-import com.backend.ripple.dto.UserSummaryResponse
+import com.backend.ripple.dto.friendship.UserSummaryResponse
 import com.backend.ripple.model.User
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping

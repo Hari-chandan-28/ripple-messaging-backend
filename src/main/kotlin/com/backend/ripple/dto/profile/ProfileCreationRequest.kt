@@ -1,5 +1,6 @@
-package com.backend.ripple.dto
+package com.backend.ripple.dto.profile
 
+import com.backend.ripple.dto.profile.RelationshipStatus
 import jakarta.validation.constraints.NotBlank
 
 data class ProfileCreationRequest (

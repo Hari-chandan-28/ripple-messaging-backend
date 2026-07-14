@@ -1,8 +1,8 @@
 package com.backend.ripple.profile
 
-import com.backend.ripple.dto.ProfileCreationRequest
-import com.backend.ripple.dto.ProfileResponse
-import com.backend.ripple.dto.ProfileUpdateRequest
+import com.backend.ripple.dto.profile.ProfileCreationRequest
+import com.backend.ripple.dto.profile.ProfileResponse
+import com.backend.ripple.dto.profile.ProfileUpdateRequest
 import com.backend.ripple.model.Profile
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping

@@ -1,4 +1,4 @@
-package com.backend.ripple.dto
+package com.backend.ripple.dto.friendship
 
 data class UserSummaryResponse(
     val userId: Long,

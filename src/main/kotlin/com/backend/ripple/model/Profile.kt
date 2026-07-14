@@ -1,5 +1,5 @@
 package com.backend.ripple.model
-import com.backend.ripple.dto.RelationshipStatus
+import com.backend.ripple.dto.profile.RelationshipStatus
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType

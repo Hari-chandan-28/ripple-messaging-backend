@@ -1,7 +1,7 @@
 package com.backend.ripple.friendship
 
-import com.backend.ripple.dto.FriendshipResponse
-import com.backend.ripple.dto.UserSummaryResponse
+import com.backend.ripple.dto.friendship.FriendshipResponse
+import com.backend.ripple.dto.friendship.UserSummaryResponse
 import com.backend.ripple.model.Friendship
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping

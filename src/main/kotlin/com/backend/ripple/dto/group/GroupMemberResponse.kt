@@ -1,4 +1,4 @@
-package com.backend.ripple.dto
+package com.backend.ripple.dto.group
 
 import com.backend.ripple.group.GroupRole
 

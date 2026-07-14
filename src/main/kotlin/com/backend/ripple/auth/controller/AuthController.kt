@@ -1,9 +1,9 @@
 package com.backend.ripple.auth.controller
 
 import com.backend.ripple.auth.service.AuthService
-import com.backend.ripple.dto.AuthResponse
-import com.backend.ripple.dto.LoginRequset
-import com.backend.ripple.dto.SignupRequest
+import com.backend.ripple.dto.auth.AuthResponse
+import com.backend.ripple.dto.auth.LoginRequset
+import com.backend.ripple.dto.auth.SignupRequest
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping

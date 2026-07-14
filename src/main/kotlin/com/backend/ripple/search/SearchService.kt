@@ -1,7 +1,7 @@
 package com.backend.ripple.search
 
 import com.backend.ripple.auth.repository.UserRepository
-import com.backend.ripple.dto.UserSummaryResponse
+import com.backend.ripple.dto.friendship.UserSummaryResponse
 import com.backend.ripple.model.User
 import com.backend.ripple.profile.ProfileRepository
 import org.springframework.stereotype.Service

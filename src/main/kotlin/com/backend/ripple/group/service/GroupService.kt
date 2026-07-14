@@ -3,19 +3,17 @@ package com.backend.ripple.group.service
 import com.backend.ripple.AccessDeniedException
 import com.backend.ripple.ResourceNotFoundException
 import com.backend.ripple.auth.repository.UserRepository
-import com.backend.ripple.dto.GroupMemberResponse
-import com.backend.ripple.dto.GroupRequest
-import com.backend.ripple.dto.GroupResponse
-import com.backend.ripple.dto.GroupUpdateRequest
+import com.backend.ripple.dto.group.GroupMemberResponse
+import com.backend.ripple.dto.group.GroupRequest
+import com.backend.ripple.dto.group.GroupResponse
+import com.backend.ripple.dto.group.GroupUpdateRequest
 import com.backend.ripple.group.GroupRole
 import com.backend.ripple.group.repository.GroupMemberRepository
 import com.backend.ripple.group.repository.GroupRepository
 import com.backend.ripple.model.Group
 import com.backend.ripple.model.GroupMember
 import com.backend.ripple.model.GroupMemberId
-import org.springframework.security.core.context.SecurityContext
 import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.security.core.context.SecurityContextImpl
 import org.springframework.stereotype.Service
 
 

@@ -4,10 +4,10 @@ import com.backend.ripple.AlreadyExistsException
 import com.backend.ripple.PrivateUserException
 import com.backend.ripple.ResourceNotFoundException
 import com.backend.ripple.auth.repository.UserRepository
-import com.backend.ripple.dto.ProfileCreationRequest
-import com.backend.ripple.dto.ProfileResponse
-import com.backend.ripple.dto.ProfileUpdateRequest
-import com.backend.ripple.dto.RelationshipStatus
+import com.backend.ripple.dto.profile.ProfileCreationRequest
+import com.backend.ripple.dto.profile.ProfileResponse
+import com.backend.ripple.dto.profile.ProfileUpdateRequest
+import com.backend.ripple.dto.profile.RelationshipStatus
 import com.backend.ripple.model.Profile
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.context.SecurityContextHolder
