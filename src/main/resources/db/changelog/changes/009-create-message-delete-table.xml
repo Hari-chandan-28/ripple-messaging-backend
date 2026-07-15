@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="009" author="harry">
+
+        <createTable tableName="message_delete">
+
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="message_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+        </createTable>
+
+        <addPrimaryKey
+                tableName="message_delete"
+                columnNames="user_id,message_id"
+                constraintName="pk_message_delete"/>
+
+        <addForeignKeyConstraint
+                baseTableName="message_delete"
+                baseColumnNames="user_id"
+                referencedTableName="user"
+                referencedColumnNames="user_id"
+                constraintName="fk_message_delete_user"
+                onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+                baseTableName="message_delete"
+                baseColumnNames="message_id"
+                referencedTableName="message"
+                referencedColumnNames="message_id"
+                constraintName="fk_message_delete_message"
+                onDelete="CASCADE"/>
+
+    </changeSet>
+
+</databaseChangeLog>

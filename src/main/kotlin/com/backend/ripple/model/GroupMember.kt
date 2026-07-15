@@ -27,7 +27,7 @@ class GroupMember(
 )
 
 @Embeddable
-class GroupMemberId(
+data class GroupMemberId(
     var groupId: Long = 0,
     var memberId: Long = 0
 ) : Serializable

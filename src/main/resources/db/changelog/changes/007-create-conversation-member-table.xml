@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="007" author="harry">
+
+        <createTable tableName="conversation_member">
+
+            <column name="conversation_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+        </createTable>
+
+        <addPrimaryKey
+                tableName="conversation_member"
+                columnNames="conversation_id,user_id"
+                constraintName="pk_conversation_member"/>
+
+        <addForeignKeyConstraint
+                baseTableName="conversation_member"
+                baseColumnNames="conversation_id"
+                referencedTableName="conversation"
+                referencedColumnNames="conversation_id"
+                constraintName="fk_conversation_member_conversation"
+                onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+                baseTableName="conversation_member"
+                baseColumnNames="user_id"
+                referencedTableName="user"
+                referencedColumnNames="user_id"
+                constraintName="fk_conversation_member_user"
+                onDelete="CASCADE"/>
+
+    </changeSet>
+
+</databaseChangeLog>
