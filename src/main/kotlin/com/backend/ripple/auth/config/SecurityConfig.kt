@@ -29,6 +29,7 @@ class SecurityConfig {
                 it
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                     .requestMatchers("/api/auth/**").permitAll()
+                    .requestMatchers("/ws/**").permitAll()
                     .requestMatchers("/actuator/**").permitAll()
                     .anyRequest().authenticated()
             }

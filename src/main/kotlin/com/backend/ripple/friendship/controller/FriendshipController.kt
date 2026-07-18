@@ -1,15 +1,14 @@
-package com.backend.ripple.friendship
+package com.backend.ripple.friendship.controller
 
 import com.backend.ripple.dto.friendship.FriendshipResponse
 import com.backend.ripple.dto.friendship.UserSummaryResponse
-import com.backend.ripple.model.Friendship
+import com.backend.ripple.friendship.service.FriendshipService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
-import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
@@ -59,7 +58,7 @@ class FriendshipController (private val friendshipService: FriendshipService) {
         return ResponseEntity.ok(sentFriendship)
     }
     @GetMapping("/{userId}/friends")
-    fun getFriendsList(@PathVariable userId: Long): ResponseEntity<List<UserSummaryResponse>>{
+    fun getFriendsList(@PathVariable userId: Long): ResponseEntity<List<UserSummaryResponse>> {
         val friends = friendshipService.getFriends(userId)
         return ResponseEntity.ok(friends)
     }

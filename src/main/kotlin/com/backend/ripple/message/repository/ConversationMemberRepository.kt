@@ -10,4 +10,5 @@ interface ConversationMemberRepository : JpaRepository<ConversationMember, Conve
 {
     fun existsById_ConversationIdAndId_UserId(conversationId: Long, userId: Long): Boolean
     fun findById_UserId(userId: Long): List<ConversationMember>
+    fun findById_ConversationId(conversationId: Long): List<ConversationMember>
 }

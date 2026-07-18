@@ -1,18 +1,18 @@
-package com.backend.ripple.friendship
+package com.backend.ripple.friendship.service
 
 import com.backend.ripple.AlreadyExistsException
 import com.backend.ripple.PrivateUserException
-import com.backend.ripple.auth.repository.UserRepository
-import com.backend.ripple.model.Friendship
-import org.springframework.stereotype.Service
 import com.backend.ripple.ResourceNotFoundException
+import com.backend.ripple.auth.repository.UserRepository
 import com.backend.ripple.dto.friendship.FriendshipResponse
-import com.backend.ripple.dto.profile.RelationshipStatus
 import com.backend.ripple.dto.friendship.UserSummaryResponse
+import com.backend.ripple.friendship.repository.FriendshipRepository
+import com.backend.ripple.model.Friendship
 import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.stereotype.Service
 
 @Service
-class FriendshipService(private val friendshipRepository: FriendshipRepository,private val userRepository: UserRepository) {
+class FriendshipService(private val friendshipRepository: FriendshipRepository, private val userRepository: UserRepository) {
 
     fun sendRequest(receiverId: Long): FriendshipResponse {
         val senderId = SecurityContextHolder.getContext().authentication?.principal as Long
@@ -34,12 +34,12 @@ class FriendshipService(private val friendshipRepository: FriendshipRepository,p
             senderId = friend.sender.userId,
             receiverId = friend.receiver.userId,
             status = friend.status,
-            )
+        )
     }
     fun acceptRequest(senderId: Long): FriendshipResponse {
         val receiverId = SecurityContextHolder.getContext().authentication?.principal as Long
         val newFriendship = friendshipRepository.findBySender_UserIdAndReceiver_UserId(senderId, receiverId).orElseThrow(){
-             ResourceNotFoundException("Friendship does not exist")
+            ResourceNotFoundException("Friendship does not exist")
         }
         newFriendship.status = 2;
         val friend = friendshipRepository.save(newFriendship)

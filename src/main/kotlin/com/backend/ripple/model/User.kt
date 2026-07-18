@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import java.time.LocalDateTime
 import java.util.Date
 
 @Entity
@@ -30,5 +31,5 @@ class User(
     var isPrivate: Boolean = false,
 
     @Column(name = "last_seen")
-    var lastSeen: Date? = null
+    var lastSeen: LocalDateTime? = null
 )
