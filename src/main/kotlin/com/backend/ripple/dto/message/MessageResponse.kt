@@ -1,7 +1,5 @@
 package com.backend.ripple.dto.message
 
-import com.backend.ripple.model.Conversation
-import com.backend.ripple.model.User
 import java.time.LocalDateTime
 
 data class MessageResponse (

@@ -10,12 +10,12 @@ import com.backend.ripple.message.repository.MessageRepository
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import com.backend.ripple.AccessDeniedException
-import com.backend.ripple.model.Conversation
-import com.backend.ripple.model.ConversationMember
-import com.backend.ripple.model.ConversationMemberId
-import com.backend.ripple.model.ConversationType
-import com.backend.ripple.model.MessageDelete
-import com.backend.ripple.model.MessageDeleteId
+import com.backend.ripple.model.message.Conversation
+import com.backend.ripple.model.message.ConversationMember
+import com.backend.ripple.model.message.ConversationMemberId
+import com.backend.ripple.model.message.ConversationType
+import com.backend.ripple.model.message.MessageDelete
+import com.backend.ripple.model.message.MessageDeleteId
 
 @Service
 class MessageService(

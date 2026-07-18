@@ -7,7 +7,7 @@ import com.backend.ripple.auth.repository.UserRepository
 import com.backend.ripple.dto.friendship.FriendshipResponse
 import com.backend.ripple.dto.friendship.UserSummaryResponse
 import com.backend.ripple.friendship.repository.FriendshipRepository
-import com.backend.ripple.model.Friendship
+import com.backend.ripple.model.friendship.Friendship
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 

@@ -1,7 +1,7 @@
 package com.backend.ripple.message.repository
 
-import com.backend.ripple.model.MessageDelete
-import com.backend.ripple.model.MessageDeleteId
+import com.backend.ripple.model.message.MessageDelete
+import com.backend.ripple.model.message.MessageDeleteId
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 

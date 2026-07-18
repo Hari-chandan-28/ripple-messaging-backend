@@ -1,5 +1,6 @@
-package com.backend.ripple.model
+package com.backend.ripple.model.message
 
+import com.backend.ripple.model.auth.User
 import jakarta.persistence.*
 import java.io.Serializable
 

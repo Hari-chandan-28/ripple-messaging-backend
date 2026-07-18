@@ -10,16 +10,23 @@ import com.backend.ripple.dto.group.GroupUpdateRequest
 import com.backend.ripple.group.GroupRole
 import com.backend.ripple.group.repository.GroupMemberRepository
 import com.backend.ripple.group.repository.GroupRepository
-import com.backend.ripple.model.Group
-import com.backend.ripple.model.GroupMember
-import com.backend.ripple.model.GroupMemberId
+import com.backend.ripple.message.repository.ConversationMemberRepository
+import com.backend.ripple.message.repository.ConversationRepository
+import com.backend.ripple.model.message.Conversation
+import com.backend.ripple.model.message.ConversationMember
+import com.backend.ripple.model.message.ConversationMemberId
+import com.backend.ripple.model.message.ConversationType
+import com.backend.ripple.model.group.Group
+import com.backend.ripple.model.group.GroupMember
+import com.backend.ripple.model.group.GroupMemberId
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 
 
 @Service
 class GroupService (private val groupMemberRepository: GroupMemberRepository, private val groupRepository: GroupRepository,
-    private val userRepository: UserRepository) {
+    private val userRepository: UserRepository,private val conversationRepository: ConversationRepository,
+    private val conversationMemberRepository: ConversationMemberRepository) {
 
     fun createGroup(group: GroupRequest): GroupResponse {
         val userId = SecurityContextHolder.getContext().authentication?.principal as Long
@@ -29,10 +36,10 @@ class GroupService (private val groupMemberRepository: GroupMemberRepository, pr
             description = group.description,
             createdBy = user,
         )
-        val ngroup =groupRepository.save(newGroup)
+        val nGroup =groupRepository.save(newGroup)
         val memberId = GroupMemberId(
-            ngroup.groupId,
-            ngroup.createdBy.userId
+            nGroup.groupId,
+            nGroup.createdBy.userId
         )
         val groupMember = GroupMember(
             memberId,
@@ -41,11 +48,22 @@ class GroupService (private val groupMemberRepository: GroupMemberRepository, pr
             role = GroupRole.OWNER,
         )
         groupMemberRepository.save(groupMember)
+        val conversation = Conversation(
+            type = ConversationType.GROUP,
+            group = nGroup
+        )
+        val savedConversation = conversationRepository.save(conversation)
+        val conversationMember = ConversationMember(
+            id = ConversationMemberId(savedConversation.conversationId, userId),
+            conversation = savedConversation,
+            user = user
+        )
+        conversationMemberRepository.save(conversationMember)
         return GroupResponse(
-            ngroup.groupId,
-            ngroup.name,
-            ngroup.description,
-            ngroup.createdBy.username
+            nGroup.groupId,
+            nGroup.name,
+            nGroup.description,
+            nGroup.createdBy.username
         )
     }
     fun updateGroup(updatedData: GroupUpdateRequest): GroupResponse {
@@ -82,6 +100,15 @@ class GroupService (private val groupMemberRepository: GroupMemberRepository, pr
             GroupRole.MEMBER
         )
         val result = groupMemberRepository.save(newGroupMember)
+        val conversation = conversationRepository.findByGroup_GroupId(groupId).orElseThrow({
+            ResourceNotFoundException("Group not found")
+        })
+        val conversationMember = ConversationMember(
+            id = ConversationMemberId(conversation.conversationId, memberId),
+            conversation = conversation,
+            user = member
+        )
+        conversationMemberRepository.save(conversationMember)
         return GroupMemberResponse(
             result.group.name,
             result.member.username,
@@ -91,6 +118,11 @@ class GroupService (private val groupMemberRepository: GroupMemberRepository, pr
     fun removeMember(memberId:Long, groupId:Long){
         val result = roleBasedTask(memberId,groupId)
         val member= result[0]
+        val conversation = conversationRepository.findByGroup_GroupId(groupId).orElseThrow({
+            ResourceNotFoundException("Group not found")
+        })
+        val conversationMember = conversationMemberRepository.findById_ConversationIdAndId_UserId(conversation.conversationId, memberId).orElseThrow { ResourceNotFoundException("User Conversation not found") }
+        conversationMemberRepository.delete(conversationMember)
         groupMemberRepository.delete(member)
     }
     fun changeRole(memberId:Long, groupId:Long,role:GroupRole){
@@ -118,6 +150,11 @@ class GroupService (private val groupMemberRepository: GroupMemberRepository, pr
         if (member.role == GroupRole.OWNER) {
             throw AccessDeniedException("Owner cannot leave — delete the group or transfer ownership first")
         }
+        val conversation = conversationRepository.findByGroup_GroupId(groupId).orElseThrow({
+            ResourceNotFoundException("Group not found")
+        })
+        val conversationMember = conversationMemberRepository.findById_ConversationIdAndId_UserId(conversation.conversationId, userId).orElseThrow { ResourceNotFoundException("User Conversation not found") }
+        conversationMemberRepository.delete(conversationMember)
         groupMemberRepository.delete(member)
     }
 

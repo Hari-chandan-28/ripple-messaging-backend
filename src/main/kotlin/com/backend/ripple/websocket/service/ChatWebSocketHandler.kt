@@ -15,7 +15,7 @@ import java.time.LocalDateTime
 import com.backend.ripple.ResourceNotFoundException
 import com.backend.ripple.message.repository.ConversationRepository
 import com.backend.ripple.message.repository.MessageRepository
-import com.backend.ripple.model.Message
+import com.backend.ripple.model.message.Message
 
 @Service
 class ChatWebSocketHandler(

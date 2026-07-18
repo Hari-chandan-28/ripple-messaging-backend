@@ -1,13 +1,15 @@
-package com.backend.ripple.model
+package com.backend.ripple.model.profile
+
 import com.backend.ripple.dto.profile.RelationshipStatus
+import com.backend.ripple.model.auth.User
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.persistence.Id
-import jakarta.persistence.OneToOne
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.MapsId
+import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 
 @Entity

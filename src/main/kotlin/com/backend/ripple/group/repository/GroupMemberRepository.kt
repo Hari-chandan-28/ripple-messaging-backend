@@ -1,8 +1,7 @@
 package com.backend.ripple.group.repository
 
-import com.backend.ripple.model.Group
-import com.backend.ripple.model.GroupMember
-import com.backend.ripple.model.GroupMemberId
+import com.backend.ripple.model.group.GroupMember
+import com.backend.ripple.model.group.GroupMemberId
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 import java.util.Optional

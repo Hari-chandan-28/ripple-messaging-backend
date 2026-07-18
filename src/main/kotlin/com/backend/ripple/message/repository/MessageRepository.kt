@@ -1,6 +1,6 @@
 package com.backend.ripple.message.repository
 
-import com.backend.ripple.model.Message
+import com.backend.ripple.model.message.Message
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param

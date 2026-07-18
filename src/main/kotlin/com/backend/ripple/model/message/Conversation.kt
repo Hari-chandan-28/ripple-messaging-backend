@@ -1,5 +1,6 @@
-package com.backend.ripple.model
+package com.backend.ripple.model.message
 
+import com.backend.ripple.model.group.Group
 import jakarta.persistence.*
 
 @Entity

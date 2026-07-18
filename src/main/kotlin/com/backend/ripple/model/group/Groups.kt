@@ -1,5 +1,6 @@
-package com.backend.ripple.model
+package com.backend.ripple.model.group
 
+import com.backend.ripple.model.auth.User
 import jakarta.persistence.*
 import java.time.LocalDateTime
 

@@ -1,6 +1,6 @@
 package com.backend.ripple.friendship.repository
 
-import com.backend.ripple.model.Friendship
+import com.backend.ripple.model.friendship.Friendship
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param

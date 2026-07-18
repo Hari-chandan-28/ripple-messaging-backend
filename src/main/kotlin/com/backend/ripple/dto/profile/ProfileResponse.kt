@@ -1,11 +1,12 @@
 package com.backend.ripple.dto.profile
 
-import com.backend.ripple.dto.profile.RelationshipStatus
 
-data class ProfileResponse (
-    val name : String,
-    val bio : String?,
-    val profilePic : String?,
-    val relationshipStatus : RelationshipStatus?,
-    val isPrivate: Boolean
+data class ProfileResponse(
+    val name: String,
+    val bio: String?,
+    val profilePic: String?,
+    val relationshipStatus: RelationshipStatus?,
+    val isPrivate: Boolean,
+    val friendshipStatus: Int?,
+    val isSender: Boolean?
 )

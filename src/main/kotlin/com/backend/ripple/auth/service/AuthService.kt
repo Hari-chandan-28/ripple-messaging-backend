@@ -5,8 +5,7 @@ import com.backend.ripple.ResourceNotFoundException
 import com.backend.ripple.UnauthorizedException
 import com.backend.ripple.auth.repository.UserRepository
 import com.backend.ripple.auth.utils.JwtUtil
-import com.backend.ripple.model.User
-import org.springframework.boot.context.config.ConfigDataResourceNotFoundException
+import com.backend.ripple.model.auth.User
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 

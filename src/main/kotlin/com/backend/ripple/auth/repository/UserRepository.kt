@@ -1,6 +1,6 @@
 package com.backend.ripple.auth.repository
 
-import com.backend.ripple.model.User
+import com.backend.ripple.model.auth.User
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 import java.util.Optional
