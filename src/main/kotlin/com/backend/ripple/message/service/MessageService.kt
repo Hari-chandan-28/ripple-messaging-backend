@@ -63,6 +63,8 @@ class MessageService(
                 throw AccessDeniedException("You can't delete the message")
             }
             val delete = MessageDeleteId(userId, messageId)
+            // TODO : WE NEED TO CHECK WHETHER THE MESSAGE IS ALREADY DELETED FOR EVERYONE BEFORE DELETING FOR ME
+            // PRACTICALLY NOT POSSIBLE BUT MY MANIPULATE THE THINGS
             val deleteMessage = MessageDelete(
                 delete,
                 user,
@@ -74,6 +76,7 @@ class MessageService(
         {
             if(deleteType == "deleteForEveryone"){
                 message.isDeleted = true
+                messageRepository.save(message)
             }
             else{
                 val deleteId = MessageDeleteId(userId, messageId)

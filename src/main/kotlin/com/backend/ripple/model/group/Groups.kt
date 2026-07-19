@@ -5,7 +5,7 @@ import jakarta.persistence.*
 import java.time.LocalDateTime
 
 @Entity
-@Table(name = "groups")
+@Table(name = "`groups`")
 class Group(
 
     @Id

@@ -35,6 +35,6 @@ class Message(
     @Column(name = "sent_at", nullable = false)
     var sentAt: LocalDateTime = LocalDateTime.now(),
 
-    @Column(name = "is_deleted", nullable = false)
+    @Column(name = "is_deleted", nullable = false, columnDefinition = "TINYINT(1)")
     var isDeleted: Boolean = false
 )

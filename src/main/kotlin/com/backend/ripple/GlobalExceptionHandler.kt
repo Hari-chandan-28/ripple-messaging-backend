@@ -34,4 +34,14 @@ class GlobalExceptionHandler {
     fun handleGeneral(e: Exception): ResponseEntity<ErrorResponse> =
         ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
             .body(ErrorResponse(500, "Something went wrong"))
+
+    @ExceptionHandler(BadRequestException::class)
+    fun handleBadRequest(e: BadRequestException): ResponseEntity<ErrorResponse> =
+        ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(ErrorResponse(400, e.message ?: "Bad request"))
+
+    @ExceptionHandler(UnauthorizedException::class)
+    fun handleUnauthorized(e: UnauthorizedException): ResponseEntity<ErrorResponse> =
+        ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            .body(ErrorResponse(401, e.message ?: "Unauthorized"))
 }
