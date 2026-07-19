@@ -99,13 +99,14 @@ class MessageService(
         val userId = SecurityContextHolder.getContext().authentication?.principal as Long
         val user = userRepository.findById(userId).orElseThrow { ResourceNotFoundException("User not found") }
         val message = messageRepository.findById(messageId).orElseThrow { ResourceNotFoundException("Message not found") }
+        if (message.isDeleted) {
+            return
+        }
         if(message.sender.userId != userId){
             if(deleteType == "deleteForEveryone"){
                 throw AccessDeniedException("You can't delete the message")
             }
             val delete = MessageDeleteId(userId, messageId)
-            // TODO : WE NEED TO CHECK WHETHER THE MESSAGE IS ALREADY DELETED FOR EVERYONE BEFORE DELETING FOR ME
-            // PRACTICALLY NOT POSSIBLE BUT MY MANIPULATE THE THINGS
             val deleteMessage = MessageDelete(
                 delete,
                 user,
