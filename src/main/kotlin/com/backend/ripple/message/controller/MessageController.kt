@@ -1,5 +1,6 @@
 package com.backend.ripple.message.controller
 
+import com.backend.ripple.dto.message.ChatSummaryResponse
 import com.backend.ripple.dto.message.MessageResponse
 import com.backend.ripple.message.service.MessageService
 import org.springframework.http.ResponseEntity
@@ -40,7 +41,7 @@ class MessageController (private val messageService: MessageService) {
         return ResponseEntity.ok(conversation)
     }
     @GetMapping("/get/conversation")
-    fun getAllConversation(): ResponseEntity<List<Long>>{
+    fun getAllConversation(): ResponseEntity<List<ChatSummaryResponse>> {
         val allConversation = messageService.getChats()
         return ResponseEntity.ok(allConversation)
     }

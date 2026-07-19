@@ -10,24 +10,65 @@ import com.backend.ripple.message.repository.MessageRepository
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import com.backend.ripple.AccessDeniedException
+import com.backend.ripple.dto.message.ChatSummaryResponse
 import com.backend.ripple.model.message.Conversation
 import com.backend.ripple.model.message.ConversationMember
 import com.backend.ripple.model.message.ConversationMemberId
 import com.backend.ripple.model.message.ConversationType
 import com.backend.ripple.model.message.MessageDelete
 import com.backend.ripple.model.message.MessageDeleteId
+import com.backend.ripple.profile.repository.ProfileRepository
 
 @Service
 class MessageService(
     private val messageDeleteRepository: MessageDeleteRepository,
     private val messageRepository: MessageRepository,
-    private  val conversationRepository: ConversationRepository,
+    private val conversationRepository: ConversationRepository,
     private val conversationMemberRepository: ConversationMemberRepository,
-    private val userRepository: UserRepository){
-    fun getChats(): List<Long> {
+    private val userRepository: UserRepository,
+    private val profileRepository: ProfileRepository
+){
+    fun getChats(): List<ChatSummaryResponse> {
         val userId = SecurityContextHolder.getContext().authentication?.principal as Long
-        return conversationMemberRepository.findById_UserId(userId)
-            .map { it.conversation.conversationId }
+        val user = userRepository.findById(userId).orElseThrow { ResourceNotFoundException("User not found") }
+
+        return conversationMemberRepository.findById_UserId(userId).map { member ->
+            val conversation = member.conversation
+            val lastMessage = messageRepository.findLastMessage(conversation.conversationId).orElse(null)
+            if (conversation.type == ConversationType.GROUP) {
+                // group chat — use group name
+                val groupName = conversation.group?.name ?: "Group"
+                ChatSummaryResponse(
+                    conversationId = conversation.conversationId,
+                    type = conversation.type,
+                    name = groupName,
+                    profilePic = null,
+                    lastMessage = lastMessage?.content,
+                    lastMessageAt = lastMessage?.sentAt?.toString()
+                )
+            } else {
+                // direct chat — find the other person
+                val otherMember = conversationMemberRepository
+                    .findById_ConversationId(conversation.conversationId)
+                    .firstOrNull { it.id.userId != userId }
+
+                val otherUser = otherMember?.let {
+                    userRepository.findById(it.id.userId).orElse(null)
+                }
+                val otherProfile = otherUser?.let {
+                    profileRepository.findByUserId(it.userId).orElse(null)
+                }
+
+                ChatSummaryResponse(
+                    conversationId = conversation.conversationId,
+                    type = conversation.type,
+                    name = otherProfile?.name ?: otherUser?.username ?: "Unknown",
+                    profilePic = otherProfile?.profilePic,
+                    lastMessage = lastMessage?.content,
+                    lastMessageAt = lastMessage?.sentAt?.toString()
+                )
+            }
+        }
     }
     fun getMessages(conversationId: Long): List<MessageResponse>{
         val userId = SecurityContextHolder.getContext().authentication?.principal as Long
