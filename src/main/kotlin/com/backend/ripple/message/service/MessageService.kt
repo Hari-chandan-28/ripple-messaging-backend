@@ -31,7 +31,7 @@ class MessageService(
     fun getChats(): List<ChatSummaryResponse> {
         val userId = SecurityContextHolder.getContext().authentication?.principal as Long
         val user = userRepository.findById(userId).orElseThrow { ResourceNotFoundException("User not found") }
-
+        // TODO: optimize with a single JOIN query when performance becomes a concern
         return conversationMemberRepository.findById_UserId(userId).map { member ->
             val conversation = member.conversation
             val lastMessage = messageRepository.findLastMessage(conversation.conversationId).orElse(null)

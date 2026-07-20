@@ -8,4 +8,5 @@ data class ProfileCreationRequest (
     val bio : String?= null,
     val profilePic : String? = null,
     val relationshipStatus : RelationshipStatus?=null,
+    val isPrivate: Boolean = false
 )

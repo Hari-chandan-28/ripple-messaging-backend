@@ -1,12 +1,15 @@
 package com.backend.ripple.profile.controller
 
+import com.backend.ripple.dto.profile.PrivacyRequest
 import com.backend.ripple.dto.profile.ProfileCreationRequest
+import com.backend.ripple.dto.profile.ProfileIsPrivate
 import com.backend.ripple.dto.profile.ProfileResponse
 import com.backend.ripple.dto.profile.ProfileUpdateRequest
 import com.backend.ripple.profile.service.ProfileService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
@@ -41,5 +44,9 @@ class ProfileController (val profileService: ProfileService) {
         profileService.deleteAccount();
         return ResponseEntity.noContent().build()
     }
-
+    @PatchMapping("/privacy")
+    fun updatePrivacy(@RequestBody isPrivate: PrivacyRequest): ResponseEntity<ProfileIsPrivate> {
+        val result = profileService.updateIsPrivate(isPrivate)
+        return ResponseEntity.ok(result)
+    }
 }

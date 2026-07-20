@@ -4,7 +4,9 @@ import com.backend.ripple.AlreadyExistsException
 import com.backend.ripple.PrivateUserException
 import com.backend.ripple.ResourceNotFoundException
 import com.backend.ripple.auth.repository.UserRepository
+import com.backend.ripple.dto.profile.PrivacyRequest
 import com.backend.ripple.dto.profile.ProfileCreationRequest
+import com.backend.ripple.dto.profile.ProfileIsPrivate
 import com.backend.ripple.dto.profile.ProfileResponse
 import com.backend.ripple.dto.profile.ProfileUpdateRequest
 import com.backend.ripple.friendship.repository.FriendshipRepository
@@ -27,14 +29,16 @@ class ProfileService(
             throw AlreadyExistsException("Profile already exists")
         }
         val user = userRepository.findById(userId).orElseThrow { ResourceNotFoundException("User $userId not found") }
-        val profile = Profile(
+        val profile1 = Profile(
             user = user,
             name = profile.name,
             bio = profile.bio,
             profilePic = profile.profilePic,
             relationshipStatus = profile.relationshipStatus,
         )
-        val newProfile = profileRepository.save(profile)
+        val newProfile = profileRepository.save(profile1)
+        user.isPrivate = profile.isPrivate
+        userRepository.save(user)
         return toResponse(newProfile,null,null)
     }
 
@@ -80,6 +84,16 @@ class ProfileService(
         profileRepository.save(userProfile)
         userRepository.save(userProfile.user)
         return toResponse(userProfile,null,null)
+    }
+    fun updateIsPrivate(privacy : PrivacyRequest): ProfileIsPrivate {
+        val userId = SecurityContextHolder.getContext().authentication?.principal as Long
+        val userProfile = userRepository.findByUserId(userId).orElseThrow { ResourceNotFoundException("User not found") }
+        userProfile.isPrivate = privacy.isPrivate
+        userRepository.save(userProfile)
+        return ProfileIsPrivate(
+            userProfile.username,
+            userProfile.isPrivate,
+        )
     }
     fun deleteAccount() {
         val userId = SecurityContextHolder.getContext().authentication?.principal as Long

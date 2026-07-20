@@ -16,9 +16,8 @@ class AuthService (
     private val passwordEncoder: PasswordEncoder
 ) {
     fun signup (username :String, email :String, password :String) : String {
-            if(userRepository.existsByEmail(email))
-            {
-                return "Email already registered!";
+            if(userRepository.existsByEmail(email)) {
+            throw AlreadyExistsException("Email already registered")
             }
             if (userRepository.existsByUsername(username)) {
             throw AlreadyExistsException("Username already taken")
