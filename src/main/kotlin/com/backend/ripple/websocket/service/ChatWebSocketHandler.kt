@@ -26,7 +26,6 @@ class ChatWebSocketHandler(
     private val conversationRepository: ConversationRepository,
     private val messageRepository: MessageRepository
 ) : TextWebSocketHandler(){
-    val logger = LoggerFactory.getLogger(ChatWebSocketHandler::class.java)
     override fun afterConnectionEstablished(session: WebSocketSession) {
         val userId = session.attributes["userId"] as Long
         val existingSession= SessionStore.sessions[userId]
@@ -35,7 +34,6 @@ class ChatWebSocketHandler(
             session.close(CloseStatus.POLICY_VIOLATION.withReason("Session already open"))
         }
         SessionStore.sessions[userId] = session
-        logger.info("New session: {}", session)
     }
 
     override fun handleTextMessage(session: WebSocketSession, message: TextMessage) {
@@ -54,7 +52,6 @@ class ChatWebSocketHandler(
                 else -> session.sendMessage(TextMessage("""{"error": "unknown type: $type"}"""))
             }
         } catch (e: Exception) {
-            logger.error("Error handling message from userId $userId: ${e.message}")
             session.sendMessage(TextMessage("""{"error": "invalid message format"}"""))
         }
     }
@@ -159,7 +156,6 @@ class ChatWebSocketHandler(
     override fun afterConnectionClosed(session: WebSocketSession, status: CloseStatus) {
         val userId = session.attributes["userId"] as Long
         sessionStore.sessions.remove(userId)
-        logger.info("Session closed for userId: {}", userId)
         val user = userRepository.findById(userId).orElse(null) ?: return
         user.lastSeen = LocalDateTime.now()
         userRepository.save(user)
