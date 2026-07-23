@@ -18,6 +18,7 @@ import com.backend.ripple.model.message.ConversationType
 import com.backend.ripple.model.message.MessageDelete
 import com.backend.ripple.model.message.MessageDeleteId
 import com.backend.ripple.profile.repository.ProfileRepository
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 class MessageService(
@@ -28,6 +29,7 @@ class MessageService(
     private val userRepository: UserRepository,
     private val profileRepository: ProfileRepository
 ){
+    @Transactional(readOnly = true)
     fun getChats(): List<ChatSummaryResponse> {
         val userId = SecurityContextHolder.getContext().authentication?.principal as Long
         val user = userRepository.findById(userId).orElseThrow { ResourceNotFoundException("User not found") }

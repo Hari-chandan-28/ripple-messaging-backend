@@ -10,6 +10,7 @@ import com.backend.ripple.friendship.repository.FriendshipRepository
 import com.backend.ripple.model.friendship.Friendship
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 class FriendshipService(private val friendshipRepository: FriendshipRepository, private val userRepository: UserRepository) {
@@ -57,14 +58,18 @@ class FriendshipService(private val friendshipRepository: FriendshipRepository, 
         }
         friendshipRepository.delete(friendship);
     }
+    @Transactional(readOnly = true)
     fun getFriendships(): List<FriendshipResponse> {
         val userId = SecurityContextHolder.getContext().authentication?.principal as Long
         return friendshipRepository.findAllFriends(userId).map { friendship ->
+            val friend = if (friendship.sender.userId == userId) friendship.receiver else friendship.sender
             FriendshipResponse(
                 friendshipId = friendship.friendshipId,
                 senderId = friendship.sender.userId,
                 receiverId = friendship.receiver.userId,
-                status = friendship.status
+                status = friendship.status,
+                friendId = friend.userId,
+                friendUsername = friend.username,
             )
         }
     }
