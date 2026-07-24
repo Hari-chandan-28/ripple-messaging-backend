@@ -73,27 +73,31 @@ class FriendshipService(private val friendshipRepository: FriendshipRepository, 
             )
         }
     }
+    @Transactional(readOnly = true)
     fun getPendingRequests(): List<FriendshipResponse> {
         val userId = SecurityContextHolder.getContext().authentication?.principal as Long
-        return friendshipRepository.findByReceiver_UserIdAndStatus(userId, 1).map{
-                friendship ->
+        return friendshipRepository.findByReceiver_UserIdAndStatus(userId, 1).map { friendship ->
             FriendshipResponse(
                 friendshipId = friendship.friendshipId,
                 senderId = friendship.sender.userId,
                 receiverId = friendship.receiver.userId,
-                status = friendship.status
+                status = friendship.status,
+                friendId = friendship.sender.userId,
+                friendUsername = friendship.sender.username,
             )
         }
     }
+    @Transactional(readOnly = true)
     fun getRequestsSent(): List<FriendshipResponse> {
         val userId = SecurityContextHolder.getContext().authentication?.principal as Long
-        return   friendshipRepository.findBySender_UserIdAndStatus(userId, 1).map{
-                friendship ->
+        return friendshipRepository.findBySender_UserIdAndStatus(userId, 1).map { friendship ->
             FriendshipResponse(
                 friendshipId = friendship.friendshipId,
                 senderId = friendship.sender.userId,
                 receiverId = friendship.receiver.userId,
-                status = friendship.status
+                status = friendship.status,
+                friendId = friendship.receiver.userId,
+                friendUsername = friendship.receiver.username,
             )
         }
     }
