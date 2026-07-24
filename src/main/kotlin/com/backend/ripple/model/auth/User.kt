@@ -1,10 +1,13 @@
 package com.backend.ripple.model.auth
 
+import com.backend.ripple.model.profile.Profile
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
+import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import java.time.LocalDateTime
 
@@ -30,5 +33,7 @@ class User(
     var isPrivate: Boolean = false,
 
     @Column(name = "last_seen")
-    var lastSeen: LocalDateTime? = null
+    var lastSeen: LocalDateTime? = null,
+    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
+    var profile: Profile? = null
 )

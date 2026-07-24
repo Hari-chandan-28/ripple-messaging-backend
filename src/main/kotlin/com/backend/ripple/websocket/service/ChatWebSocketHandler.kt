@@ -13,8 +13,10 @@ import tools.jackson.databind.JsonNode
 import tools.jackson.databind.ObjectMapper
 import java.time.LocalDateTime
 import com.backend.ripple.ResourceNotFoundException
+import com.backend.ripple.friendship.repository.FriendshipRepository
 import com.backend.ripple.message.repository.ConversationRepository
 import com.backend.ripple.message.repository.MessageRepository
+import com.backend.ripple.model.message.ConversationType
 import com.backend.ripple.model.message.Message
 
 @Service
@@ -24,8 +26,9 @@ class ChatWebSocketHandler(
     private val objectMapper: ObjectMapper,
     private val conversationMemberRepository: ConversationMemberRepository,
     private val conversationRepository: ConversationRepository,
-    private val messageRepository: MessageRepository
-) : TextWebSocketHandler(){
+    private val messageRepository: MessageRepository,
+    private val friendshipRepository: FriendshipRepository
+    ) : TextWebSocketHandler(){
     override fun afterConnectionEstablished(session: WebSocketSession) {
         val userId = session.attributes["userId"] as Long
         val existingSession= SessionStore.sessions[userId]
@@ -69,6 +72,23 @@ class ChatWebSocketHandler(
         }
         val sender = userRepository.findById(userId).orElseThrow { ResourceNotFoundException("User not found") }
         val conversation = conversationRepository.findById(conversationId).orElseThrow { ResourceNotFoundException("Conversation not found") }
+        if (conversation.type == ConversationType.PRIVATE) {
+            val members = conversationMemberRepository.findById_ConversationId(conversationId)
+            val otherUserId = members.firstOrNull { it.id.userId != userId }?.id?.userId
+            if (otherUserId != null) {
+                val areFriends = friendshipRepository.existsBySender_UserIdAndReceiver_UserId(userId, otherUserId) ||
+                        friendshipRepository.existsBySender_UserIdAndReceiver_UserId(otherUserId, userId)
+                val friendship = if (areFriends) {
+                    friendshipRepository.findBySender_UserIdAndReceiver_UserId(userId, otherUserId)
+                        .orElse(friendshipRepository.findBySender_UserIdAndReceiver_UserId(otherUserId, userId).orElse(null))
+                } else null
+
+                if (friendship == null || friendship.status != 2) {
+                    session.sendMessage(TextMessage("""{"error": "not_friends", "message": "You are no longer friends"}"""))
+                    return
+                }
+            }
+        }
         val message = Message(
             conversation = conversation,
             sender = sender,

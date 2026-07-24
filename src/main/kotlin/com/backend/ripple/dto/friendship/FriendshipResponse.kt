@@ -7,5 +7,8 @@ data class FriendshipResponse(
     val status: Int,
     val friendId: Long = 0,
     val friendUsername: String = "",
-    val profilePic: String?=null,
+    val friendName: String? = null,
+    val friendProfilePic: String? = null,
+    val friendBio: String? = null,
+    val friendRelationshipStatus: String? = null,
 )

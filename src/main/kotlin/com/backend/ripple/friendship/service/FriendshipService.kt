@@ -8,47 +8,57 @@ import com.backend.ripple.dto.friendship.FriendshipResponse
 import com.backend.ripple.dto.friendship.UserSummaryResponse
 import com.backend.ripple.friendship.repository.FriendshipRepository
 import com.backend.ripple.model.friendship.Friendship
+import com.backend.ripple.websocket.service.NotificationService
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
-class FriendshipService(private val friendshipRepository: FriendshipRepository, private val userRepository: UserRepository) {
+class FriendshipService(
+    private val friendshipRepository: FriendshipRepository,
+    private val userRepository: UserRepository,
+    private val notificationService: NotificationService
+){
 
     fun sendRequest(receiverId: Long): FriendshipResponse {
         val senderId = SecurityContextHolder.getContext().authentication?.principal as Long
-        if (friendshipRepository.existsBySender_UserIdAndReceiver_UserId(senderId, receiverId) ||
-            friendshipRepository.existsBySender_UserIdAndReceiver_UserId(receiverId, senderId)) {
-            throw AlreadyExistsException("Friendship already exists")
-        }
-        val sender = userRepository.findById(senderId).orElseThrow { ResourceNotFoundException("User with id $senderId does not exist") }
-        val receiver= userRepository.findById(receiverId) .orElseThrow { ResourceNotFoundException("User with id $receiverId does not exist") }
+        // ... existing duplicate check ...
+        val sender = userRepository.findById(senderId).orElseThrow { ResourceNotFoundException("User not found") }
+        val receiver = userRepository.findById(receiverId).orElseThrow { ResourceNotFoundException("User not found") }
+        val newFriendship = Friendship(sender = sender, receiver = receiver, status = 1)
+        val saved = friendshipRepository.save(newFriendship)
 
-            val newFriendship = Friendship(
-                sender = sender,
-                receiver = receiver,
-                status = 1,
-            )
-        val friend = friendshipRepository.save(newFriendship)
+        // Notify receiver via WebSocket
+        notificationService.notifyFriendRequest(receiverId, senderId, sender.username)
+
         return FriendshipResponse(
-            friendshipId = friend.friendshipId,
-            senderId = friend.sender.userId,
-            receiverId = friend.receiver.userId,
-            status = friend.status,
+            friendshipId = saved.friendshipId,
+            senderId = saved.sender.userId,
+            receiverId = saved.receiver.userId,
+            status = saved.status,
+            friendId = receiverId,
+            friendUsername = receiver.username,
         )
     }
+
     fun acceptRequest(senderId: Long): FriendshipResponse {
         val receiverId = SecurityContextHolder.getContext().authentication?.principal as Long
-        val newFriendship = friendshipRepository.findBySender_UserIdAndReceiver_UserId(senderId, receiverId).orElseThrow(){
-            ResourceNotFoundException("Friendship does not exist")
-        }
-        newFriendship.status = 2;
-        val friend = friendshipRepository.save(newFriendship)
+        val friendship = friendshipRepository.findBySender_UserIdAndReceiver_UserId(senderId, receiverId)
+            .orElseThrow { ResourceNotFoundException("Friendship does not exist") }
+        friendship.status = 2
+        val saved = friendshipRepository.save(friendship)
+
+        // Notify original sender that request was accepted
+        val receiver = userRepository.findById(receiverId).orElseThrow { ResourceNotFoundException("User not found") }
+        notificationService.notifyRequestAccepted(senderId, receiverId, receiver.username)
+
         return FriendshipResponse(
-            friendshipId = friend.friendshipId,
-            senderId = friend.sender.userId,
-            receiverId = friend.receiver.userId,
-            status = friend.status,
+            friendshipId = saved.friendshipId,
+            senderId = saved.sender.userId,
+            receiverId = saved.receiver.userId,
+            status = saved.status,
+            friendId = senderId,
+            friendUsername = saved.sender.username,
         )
     }
     fun rejectRequest(senderId: Long) {
@@ -58,11 +68,11 @@ class FriendshipService(private val friendshipRepository: FriendshipRepository, 
         }
         friendshipRepository.delete(friendship);
     }
-    @Transactional(readOnly = true)
     fun getFriendships(): List<FriendshipResponse> {
         val userId = SecurityContextHolder.getContext().authentication?.principal as Long
-        return friendshipRepository.findAllFriends(userId).map { friendship ->
+        return friendshipRepository.findAllFriendsWithProfiles(userId).map { friendship ->
             val friend = if (friendship.sender.userId == userId) friendship.receiver else friendship.sender
+            val profile = friend.profile
             FriendshipResponse(
                 friendshipId = friendship.friendshipId,
                 senderId = friendship.sender.userId,
@@ -70,20 +80,30 @@ class FriendshipService(private val friendshipRepository: FriendshipRepository, 
                 status = friendship.status,
                 friendId = friend.userId,
                 friendUsername = friend.username,
+                friendName = profile?.name,
+                friendProfilePic = profile?.profilePic,
+                friendBio = profile?.bio,
+                friendRelationshipStatus = profile?.relationshipStatus?.name,
             )
         }
     }
+
     fun getPendingRequests(): List<FriendshipResponse> {
         val userId = SecurityContextHolder.getContext().authentication?.principal as Long
-        return friendshipRepository.getPendingFriends(userId).map { it ->
+        return friendshipRepository.findPendingWithProfiles(userId).map { friendship ->
+            val sender = friendship.sender
+            val profile = sender.profile
             FriendshipResponse(
-                friendshipId = it.friendshipId,
-                senderId = it.senderId,
-                receiverId = it.receiverId,
-                status = it.status,
-                friendId = it.friendId,
-                friendUsername = it.friendUsername,
-                profilePic = it.profilePic
+                friendshipId = friendship.friendshipId,
+                senderId = friendship.sender.userId,
+                receiverId = friendship.receiver.userId,
+                status = friendship.status,
+                friendId = sender.userId,
+                friendUsername = sender.username,
+                friendName = profile?.name,
+                friendProfilePic = profile?.profilePic,
+                friendBio = profile?.bio,
+                friendRelationshipStatus = profile?.relationshipStatus?.name,
             )
         }
     }

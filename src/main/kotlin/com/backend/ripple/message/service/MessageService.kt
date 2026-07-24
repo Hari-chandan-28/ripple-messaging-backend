@@ -72,20 +72,19 @@ class MessageService(
             }
         }
     }
-    fun getMessages(conversationId: Long): List<MessageResponse>{
+    fun getMessages(conversationId: Long): List<MessageResponse> {
         val userId = SecurityContextHolder.getContext().authentication?.principal as Long
         val messages = messageRepository.findMessagesForUser(conversationId, userId)
-        val list = mutableListOf<MessageResponse>()
-        for (message in messages){
-            val chat= MessageResponse(
-             convId=conversationId,
-             messageId = message.messageId ,
-             senderId = message.sender.userId ,
-             content = message.content ,
-             sendAt = message.sentAt)
-            list.add(chat)
+        return messages.map { message ->
+            MessageResponse(
+                convId = conversationId,
+                messageId = message.messageId,
+                senderId = message.sender.userId,
+                content = message.content,
+                sendAt = message.sentAt.toString(),
+                isDeleted = message.isDeleted
+            )
         }
-    return list
     }
     fun editMessage(messageId: Long, newContent: String){
         val userId = SecurityContextHolder.getContext().authentication?.principal as Long
