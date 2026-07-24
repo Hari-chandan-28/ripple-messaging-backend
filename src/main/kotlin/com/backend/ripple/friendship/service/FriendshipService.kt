@@ -40,7 +40,7 @@ class FriendshipService(
             friendUsername = receiver.username,
         )
     }
-
+    @Transactional
     fun acceptRequest(senderId: Long): FriendshipResponse {
         val receiverId = SecurityContextHolder.getContext().authentication?.principal as Long
         val friendship = friendshipRepository.findBySender_UserIdAndReceiver_UserId(senderId, receiverId)
