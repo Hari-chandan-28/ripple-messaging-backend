@@ -25,6 +25,10 @@ class FriendshipService(
         // ... existing duplicate check ...
         val sender = userRepository.findById(senderId).orElseThrow { ResourceNotFoundException("User not found") }
         val receiver = userRepository.findById(receiverId).orElseThrow { ResourceNotFoundException("User not found") }
+        if(friendshipRepository.existsBySender_UserIdAndReceiver_UserId(senderId,receiverId) || friendshipRepository.existsBySender_UserIdAndReceiver_UserId(receiverId,senderId))
+        {
+            throw AlreadyExistsException("Friendship already exists")
+        }
         val newFriendship = Friendship(sender = sender, receiver = receiver, status = 1)
         val saved = friendshipRepository.save(newFriendship)
 
