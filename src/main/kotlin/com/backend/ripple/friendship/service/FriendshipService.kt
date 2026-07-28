@@ -19,31 +19,6 @@ class FriendshipService(
     private val userRepository: UserRepository,
     private val notificationService: NotificationService
 ){
-
-    fun sendRequest(receiverId: Long): FriendshipResponse {
-        val senderId = SecurityContextHolder.getContext().authentication?.principal as Long
-        // ... existing duplicate check ...
-        val sender = userRepository.findById(senderId).orElseThrow { ResourceNotFoundException("User not found") }
-        val receiver = userRepository.findById(receiverId).orElseThrow { ResourceNotFoundException("User not found") }
-        if(friendshipRepository.existsBySender_UserIdAndReceiver_UserId(senderId,receiverId) || friendshipRepository.existsBySender_UserIdAndReceiver_UserId(receiverId,senderId))
-        {
-            throw AlreadyExistsException("Friendship already exists")
-        }
-        val newFriendship = Friendship(sender = sender, receiver = receiver, status = 1)
-        val saved = friendshipRepository.save(newFriendship)
-
-        // Notify receiver via WebSocket
-        notificationService.notifyFriendRequest(receiverId, senderId, sender.username)
-
-        return FriendshipResponse(
-            friendshipId = saved.friendshipId,
-            senderId = saved.sender.userId,
-            receiverId = saved.receiver.userId,
-            status = saved.status,
-            friendId = receiverId,
-            friendUsername = receiver.username,
-        )
-    }
     @Transactional
     fun acceptRequest(senderId: Long): FriendshipResponse {
         val receiverId = SecurityContextHolder.getContext().authentication?.principal as Long
@@ -56,14 +31,7 @@ class FriendshipService(
         val receiver = userRepository.findById(receiverId).orElseThrow { ResourceNotFoundException("User not found") }
         notificationService.notifyRequestAccepted(senderId, receiverId, receiver.username)
 
-        return FriendshipResponse(
-            friendshipId = saved.friendshipId,
-            senderId = saved.sender.userId,
-            receiverId = saved.receiver.userId,
-            status = saved.status,
-            friendId = senderId,
-            friendUsername = saved.sender.username,
-        )
+        return toResponse(saved, receiverId)
     }
     fun rejectRequest(senderId: Long) {
         val receiverId = SecurityContextHolder.getContext().authentication?.principal as Long
@@ -71,6 +39,14 @@ class FriendshipService(
             ResourceNotFoundException("No friendship between $senderId and $receiverId ")
         }
         friendshipRepository.delete(friendship);
+    }
+    fun takeBackRequest(receiverId: Long)
+    {
+        val senderId=SecurityContextHolder.getContext().authentication?.principal as Long
+        val friendship = friendshipRepository.findBySender_UserIdAndReceiver_UserId(senderId, receiverId).orElseThrow{
+            ResourceNotFoundException("No friendship between $senderId and $receiverId ")
+        }
+        friendshipRepository.delete(friendship)
     }
     fun getFriendships(): List<FriendshipResponse> {
         val userId = SecurityContextHolder.getContext().authentication?.principal as Long
@@ -168,5 +144,45 @@ class FriendshipService(
             }
         }
         return friendshipList
+    }
+    fun sendRequest(receiverId: Long): FriendshipResponse {
+        val senderId = SecurityContextHolder.getContext().authentication?.principal as Long
+        if (friendshipRepository.existsBySender_UserIdAndReceiver_UserId(senderId, receiverId) ||
+            friendshipRepository.existsBySender_UserIdAndReceiver_UserId(receiverId, senderId)) {
+            throw AlreadyExistsException("Friendship already exists")
+        }
+        val sender = userRepository.findById(senderId).orElseThrow { ResourceNotFoundException("User not found") }
+        val receiver = userRepository.findById(receiverId).orElseThrow { ResourceNotFoundException("User not found") }
+        val friendship = Friendship(sender = sender, receiver = receiver, status = 1)
+        val saved = friendshipRepository.save(friendship)
+        notificationService.notifyFriendRequest(
+            receiverId, senderId, sender.username,
+            sender.profile?.name
+        )
+        return toResponse(saved, senderId)
+    }
+
+    fun removeFriend(friendId: Long) {
+        val userId = SecurityContextHolder.getContext().authentication?.principal as Long
+        var friendship = friendshipRepository.findBySender_UserIdAndReceiver_UserId(userId, friendId)
+        if (!friendship.isPresent) {
+            friendship = friendshipRepository.findBySender_UserIdAndReceiver_UserId(friendId, userId)
+        }
+        friendshipRepository.delete(friendship.orElseThrow { ResourceNotFoundException("Friendship not found") })
+        notificationService.notifyFriendRemoved(friendId, userId)
+    }
+
+    private fun toResponse(f: Friendship, currentUserId: Long): FriendshipResponse {
+        val friend = if (f.sender.userId == currentUserId) f.receiver else f.sender
+        return FriendshipResponse(
+            friendshipId = f.friendshipId,
+            senderId = f.sender.userId,
+            receiverId = f.receiver.userId,
+            status = f.status,
+            friendId = friend.userId,
+            friendUsername = friend.username,
+            friendName = friend.profile?.name,
+            friendProfilePic = friend.profile?.profilePic,
+        )
     }
 }

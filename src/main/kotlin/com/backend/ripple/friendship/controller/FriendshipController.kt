@@ -62,5 +62,10 @@ class FriendshipController (private val friendshipService: FriendshipService) {
         val friends = friendshipService.getFriends(userId)
         return ResponseEntity.ok(friends)
     }
+    @DeleteMapping("/takeback/{receiverId}")
+    fun takeBackRequest(@PathVariable receiverId: Long): ResponseEntity<Void>{
+        val friendship = friendshipService.takeBackRequest(receiverId)
+        return ResponseEntity.noContent().build()
+    }
 
 }

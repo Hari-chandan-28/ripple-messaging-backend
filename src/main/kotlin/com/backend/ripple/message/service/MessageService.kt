@@ -46,7 +46,9 @@ class MessageService(
                     name = groupName,
                     profilePic = null,
                     lastMessage = lastMessage?.content,
-                    lastMessageAt = lastMessage?.sentAt?.toString()
+                    lastMessageAt = lastMessage?.sentAt?.toString(),
+                    senderId = null,
+                    receiverId = null
                 )
             } else {
                 // direct chat — find the other person
@@ -65,6 +67,8 @@ class MessageService(
                     conversationId = conversation.conversationId,
                     type = conversation.type,
                     name = otherProfile?.name ?: otherUser?.username ?: "Unknown",
+                    senderId = userId,
+                    receiverId = otherUser?.userId,
                     profilePic = otherProfile?.profilePic,
                     lastMessage = lastMessage?.content,
                     lastMessageAt = lastMessage?.sentAt?.toString()

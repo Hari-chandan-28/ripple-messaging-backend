@@ -101,13 +101,15 @@ class ProfileService(
     }
     private fun toResponse(profile: Profile, friendshipStatus: Int?, isSender: Boolean?): ProfileResponse {
         return ProfileResponse(
+            userId = profile.userId,
+            username = profile.user.username,
             name = profile.name,
             bio = profile.bio,
             profilePic = profile.profilePic,
-            relationshipStatus = profile.relationshipStatus,
+            relationshipStatus = profile.relationshipStatus?.name,
             isPrivate = profile.user.isPrivate,
             friendshipStatus = friendshipStatus,
-            isSender = isSender
+            isSender = isSender,
         )
     }
 }
