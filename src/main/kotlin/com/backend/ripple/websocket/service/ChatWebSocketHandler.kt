@@ -119,7 +119,8 @@ class ChatWebSocketHandler(
             "payload" to mapOf(
                 "messageId" to savedMessage.messageId,
                 "conversationId" to conversationId,
-                "deliveredAt" to savedMessage.sentAt.toString()
+                "deliveredAt" to savedMessage.sentAt.toString(),
+                "content" to savedMessage.content,  // add this
             )
         ))
         session.sendMessage(TextMessage(deliveredPacket))
