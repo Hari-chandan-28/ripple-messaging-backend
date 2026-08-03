@@ -5,6 +5,8 @@ import com.backend.ripple.model.message.ConversationType
 data class ChatSummaryResponse(
     val conversationId: Long,
     val type: ConversationType,
+    val groupId: Long?=null,
+    val description: String?=null,
     val senderId:Long?=null,
     val receiverId:Long?=null,
     val name: String,

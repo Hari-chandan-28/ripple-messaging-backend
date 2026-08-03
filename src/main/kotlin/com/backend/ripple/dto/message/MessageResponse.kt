@@ -6,7 +6,9 @@ data class MessageResponse(
     val messageId: Long,
     val convId: Long,
     val senderId: Long,
+    val senderUsername: String = "",  // add this
     val content: String,
     val sendAt: String,
     val isDeleted: Boolean,
+    val isRead: Boolean= false,
 )

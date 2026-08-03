@@ -38,17 +38,15 @@ class MessageService(
             val conversation = member.conversation
             val lastMessage = messageRepository.findLastMessage(conversation.conversationId).orElse(null)
             if (conversation.type == ConversationType.GROUP) {
-                // group chat — use group name
-                val groupName = conversation.group?.name ?: "Group"
                 ChatSummaryResponse(
                     conversationId = conversation.conversationId,
-                    type = conversation.type,
-                    name = groupName,
-                    profilePic = null,
+                    type = ConversationType.GROUP,
+                    groupId = conversation.group?.groupId,
+                    name = conversation.group?.name ?: "Group",
+                    profilePic = null, // add group pic field to Group entity if needed
+                    description = conversation.group?.description,
                     lastMessage = lastMessage?.content,
-                    lastMessageAt = lastMessage?.sentAt?.toString(),
-                    senderId = null,
-                    receiverId = null
+                    lastMessageAt = lastMessage?.sentAt?.toString()
                 )
             } else {
                 // direct chat — find the other person
@@ -76,6 +74,7 @@ class MessageService(
             }
         }
     }
+    @Transactional
     fun getMessages(conversationId: Long): List<MessageResponse> {
         val userId = SecurityContextHolder.getContext().authentication?.principal as Long
         val messages = messageRepository.findMessagesForUser(conversationId, userId)
@@ -84,6 +83,7 @@ class MessageService(
                 convId = conversationId,
                 messageId = message.messageId,
                 senderId = message.sender.userId,
+                senderUsername = message.sender.username,  // add this
                 content = message.content,
                 sendAt = message.sentAt.toString(),
                 isDeleted = message.isDeleted

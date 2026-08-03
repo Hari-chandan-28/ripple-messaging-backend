@@ -34,6 +34,7 @@ class SecurityConfig (private val jwtAuthFilter: JwtFilter){
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                     .requestMatchers("/api/auth/**").permitAll()
                     .requestMatchers("/ws/**").permitAll()
+                    .requestMatchers("/api/users/online-status").authenticated()
                     .requestMatchers("/uploads/**").permitAll()
                     .requestMatchers("/actuator/**").permitAll()
                     .anyRequest().authenticated()

@@ -43,4 +43,15 @@ class NotificationService(private val objectMapper: ObjectMapper) {
             "payload" to mapOf("removerId" to removerId)
         ))
     }
+    fun notifyAddedToGroup(memberId: Long, groupId: Long, groupName: String, addedBy: Long, addedByUsername: String) {
+        send(memberId, mapOf(
+            "type" to "ADDED_TO_GROUP",
+            "payload" to mapOf(
+                "groupId" to groupId,
+                "groupName" to groupName,
+                "addedBy" to addedBy,
+                "addedByUsername" to addedByUsername,
+            )
+        ))
+    }
 }

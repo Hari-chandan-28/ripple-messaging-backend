@@ -1,5 +1,6 @@
 package com.backend.ripple.group.controller
 
+import com.backend.ripple.dto.group.GroupCreateWithMembersRequest
 import com.backend.ripple.dto.group.GroupMemberResponse
 import com.backend.ripple.dto.group.GroupRequest
 import com.backend.ripple.dto.group.GroupResponse
@@ -34,7 +35,7 @@ class GroupController(private val groupService: GroupService) {
     @PostMapping("/{groupId}/add/{memberId}")
     fun addGroupMember(@PathVariable groupId: Long, @PathVariable memberId: Long): ResponseEntity<GroupMemberResponse>
     {
-        val member = groupService.addGroupMember(memberId,groupId)
+        val member = groupService.addGroupMember(groupId,memberId)
         return ResponseEntity.ok(member)
     }
     @DeleteMapping("/{groupId}/remove/{memberId}")
@@ -61,5 +62,10 @@ class GroupController(private val groupService: GroupService) {
     fun changeRole(@PathVariable groupId: Long, @PathVariable memberId: Long, @RequestBody role: GroupRole): ResponseEntity<Void> {
         groupService.changeRole(memberId, groupId, role)
         return ResponseEntity.noContent().build()
+    }
+    @PostMapping("/create/all")
+    fun createGroup(@RequestBody request: GroupCreateWithMembersRequest): ResponseEntity<GroupResponse> {
+        val group = groupService.createGroupWithMembers(request)
+        return ResponseEntity.ok(group)
     }
 }

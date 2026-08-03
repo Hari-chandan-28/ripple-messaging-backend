@@ -103,8 +103,10 @@ class ChatWebSocketHandler(
                 "messageId" to savedMessage.messageId,
                 "conversationId" to conversationId,
                 "senderId" to userId,
-                "content" to content,
-                "timestamp" to savedMessage.sentAt.toString()
+                "senderUsername" to sender.username,  // add this
+                "content" to savedMessage.content,
+                "timestamp" to savedMessage.sentAt.toString(),
+                "isDeleted" to false,
             )
         ))
         members.filter { it.id.userId != userId }.forEach { member ->
@@ -126,25 +128,21 @@ class ChatWebSocketHandler(
         session.sendMessage(TextMessage(deliveredPacket))
     }
     private fun handleTyping(session: WebSocketSession, userId: Long, node: JsonNode) {
-        val conversationId = node.get("payload")?.get("conversationId")?.asLong()
-        if (conversationId == null) {
-            session.sendMessage(TextMessage("""{"error": "missing conversationId or content"}"""))
-            return
-        }
+        val conversationId = node.get("payload")?.get("conversationId")?.asLong() ?: return
+        val isTyping = node.get("payload")?.get("isTyping")?.asBoolean() ?: return
+
         val members = conversationMemberRepository.findById_ConversationId(conversationId)
         val typingPacket = objectMapper.writeValueAsString(mapOf(
             "type" to "TYPING",
             "payload" to mapOf(
                 "conversationId" to conversationId,
                 "senderId" to userId,
-                "isTyping" to (node.get("payload")?.get("isTyping")?.asBoolean() ?: false)
+                "isTyping" to isTyping,
             )
         ))
         members.filter { it.id.userId != userId }.forEach { member ->
-            sessionStore.sessions[member.id.userId]?.let { receiverSession ->
-                if (receiverSession.isOpen) {
-                    receiverSession.sendMessage(TextMessage(typingPacket))
-                }
+            SessionStore.sessions[member.id.userId]?.let { s ->
+                if (s.isOpen) s.sendMessage(TextMessage(typingPacket))
             }
         }
     }
