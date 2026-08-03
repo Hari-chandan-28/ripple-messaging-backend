@@ -77,6 +77,7 @@ class GroupService (private val groupMemberRepository: GroupMemberRepository, pr
         val newGroup = Group(
             name = request.name,
             description = request.description,
+            profilePic = request.profilePic,
             createdBy = user,
             createdAt = LocalDateTime.now()
         )
@@ -111,13 +112,14 @@ class GroupService (private val groupMemberRepository: GroupMemberRepository, pr
 
         return GroupResponse(savedGroup.groupId, savedGroup.name, savedGroup.description, user.username)
     }
+    @Transactional
     fun updateGroup(updatedData: GroupUpdateRequest): GroupResponse {
         val userId = SecurityContextHolder.getContext().authentication?.principal as Long
         requireAdminOrAbove( updatedData.groupId, userId)
         val group = groupRepository.findByGroupId(updatedData.groupId).orElseThrow({ResourceNotFoundException("Group not found")})
-        group.name = updatedData.name
+        group.name = updatedData.name ?: group.name
         group.description = updatedData.description
-
+        group.profilePic = updatedData.profilePic ?: group.profilePic
         val result = groupRepository.save(group)
         return GroupResponse(
             result.groupId,
@@ -126,6 +128,17 @@ class GroupService (private val groupMemberRepository: GroupMemberRepository, pr
             result.createdBy.username
         )
     }
+//fun updateGroup(request: GroupUpdateRequest): GroupResponse {
+//    val userId = SecurityContextHolder.getContext().authentication?.principal as Long
+//    requireAdminOrAbove( request.groupId, userId)
+//    val group = groupRepository.findById(request.groupId)
+//        .orElseThrow { ResourceNotFoundException("Group not found") }
+//    group.name = request.name ?: group.name
+//    group.description = request.description ?: group.description
+//    group.profilePic = request.profilePic ?: group.profilePic
+//    groupRepository.save(group)
+//    return GroupResponse(group.groupId, group.name, group.description, group.createdBy.username)
+//}
 //    fun addGroupMember(memberId:Long, groupId:Long): GroupMemberResponse {
 //        val userId = SecurityContextHolder.getContext().authentication?.principal as Long
 //        requireAdminOrAbove(groupId, userId)

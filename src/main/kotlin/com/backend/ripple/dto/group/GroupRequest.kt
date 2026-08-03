@@ -5,7 +5,8 @@ data class GroupRequest(
     val description: String,
 )
 data class GroupUpdateRequest(
-    val name: String,
-    val description: String,
     val groupId: Long,
+    val name: String?,
+    val description: String?,
+    val profilePic: String?,
 )

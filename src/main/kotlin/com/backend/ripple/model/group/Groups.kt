@@ -24,5 +24,8 @@ class Group(
     var createdBy: User = User(),
 
     @Column(name = "created_at", nullable = false)
-    var createdAt: LocalDateTime = LocalDateTime.now()
+    var createdAt: LocalDateTime = LocalDateTime.now(),
+
+    @Column(nullable = true)
+    var profilePic: String? = null
 )

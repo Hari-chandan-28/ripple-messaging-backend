@@ -43,7 +43,7 @@ class MessageService(
                     type = ConversationType.GROUP,
                     groupId = conversation.group?.groupId,
                     name = conversation.group?.name ?: "Group",
-                    profilePic = null, // add group pic field to Group entity if needed
+                    profilePic =conversation.group?.profilePic, // add group pic field to Group entity if needed
                     description = conversation.group?.description,
                     lastMessage = lastMessage?.content,
                     lastMessageAt = lastMessage?.sentAt?.toString()
