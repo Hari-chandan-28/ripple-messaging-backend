@@ -3,7 +3,6 @@ package com.backend.ripple.websocket.service
 import com.backend.ripple.auth.repository.UserRepository
 import com.backend.ripple.message.repository.ConversationMemberRepository
 import com.backend.ripple.websocket.SessionStore
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.socket.CloseStatus
 import org.springframework.web.socket.TextMessage
@@ -13,6 +12,7 @@ import tools.jackson.databind.JsonNode
 import tools.jackson.databind.ObjectMapper
 import java.time.LocalDateTime
 import com.backend.ripple.ResourceNotFoundException
+import com.backend.ripple.UnauthorizedException
 import com.backend.ripple.friendship.repository.FriendshipRepository
 import com.backend.ripple.message.repository.ConversationRepository
 import com.backend.ripple.message.repository.MessageRepository
@@ -52,11 +52,60 @@ class ChatWebSocketHandler(
                 "SEND_MESSAGE" -> handleSendMessage(session, userId, node)
                 "TYPING" -> handleTyping(session, userId, node)
                 "READ_RECEIPT" -> handleReadReceipt(session, userId, node)
+                "EDIT_MESSAGE" -> handleEditMessage(session, userId, node)
                 else -> session.sendMessage(TextMessage("""{"error": "unknown type: $type"}"""))
             }
         } catch (e: Exception) {
             session.sendMessage(TextMessage("""{"error": "invalid message format"}"""))
         }
+    }
+    private fun handleEditMessage(
+            session: WebSocketSession,
+            userId: Long,
+            node: JsonNode
+        ){
+        val messageId = node.get("payload")?.get("messageId")?.asLong()
+        val content = node.get("payload")?.get("content")?.asString()
+        val conversationId =
+            node.get("payload")?.get("conversationId")?.asLong()
+        if(messageId == null){
+            session.sendMessage(TextMessage("""{"error": "message not found"}"""))
+            return
+        }
+        val message = messageRepository.findById(messageId)
+            .orElseThrow { ResourceNotFoundException("Message not found") }
+        val id = message.sender.userId
+        val user= userRepository.findById(userId).orElseThrow { ResourceNotFoundException("user not found") }
+        if(userId!= id)
+        {
+            throw UnauthorizedException("this message is not belongs to this user")
+        }
+        if (content != null) {
+            message.content = content
+        }
+        val savedMessage =messageRepository.save(message)
+        val editedPacket =objectMapper.writeValueAsString(mapOf(
+            "type" to "EDIT_MESSAGE",
+            "payload" to mapOf(
+                "messageId" to savedMessage.messageId,
+                "conversationId" to conversationId,
+                "senderId" to userId,
+                "senderUsername" to user.username,  // add this
+                "content" to savedMessage.content,
+                "timestamp" to savedMessage.sentAt.toString(),
+                "isDeleted" to false,
+            )
+        ))
+        val members = conversationMemberRepository.findById_ConversationId(conversationId)
+        members.forEach { member ->
+            sessionStore.sessions[member.id.userId]?.let { receiverSession ->
+                if (receiverSession.isOpen) {
+                    receiverSession.sendMessage(TextMessage(editedPacket))
+                }
+            }
+        }
+
+
     }
     private fun handleSendMessage(session: WebSocketSession, userId: Long, node: JsonNode) {
         val conversationId = node.get("payload")?.get("conversationId")?.asLong()
@@ -173,10 +222,14 @@ class ChatWebSocketHandler(
         }
     }
     override fun afterConnectionClosed(session: WebSocketSession, status: CloseStatus) {
-        val userId = session.attributes["userId"] as Long
-        sessionStore.sessions.remove(userId)
-        val user = userRepository.findById(userId).orElse(null) ?: return
-        user.lastSeen = LocalDateTime.now()
-        userRepository.save(user)
+        val userId = session.attributes["userId"] as? Long ?: return
+        SessionStore.sessions.remove(userId)
+        try {
+            val user = userRepository.findById(userId).orElse(null) ?: return
+            user.lastSeen = LocalDateTime.now()
+            userRepository.save(user)
+        } catch (e: Exception) {
+            println("Failed to update lastSeen for user $userId: ${e.message}")
+        }
     }
 }

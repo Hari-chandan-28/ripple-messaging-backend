@@ -110,6 +110,7 @@ class ProfileService(
             isPrivate = profile.user.isPrivate,
             friendshipStatus = friendshipStatus,
             isSender = isSender,
+            lastSeen = profile.user.lastSeen?.toString(),
         )
     }
 }
