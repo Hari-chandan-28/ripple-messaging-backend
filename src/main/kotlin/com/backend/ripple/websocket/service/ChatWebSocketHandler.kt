@@ -59,53 +59,61 @@ class ChatWebSocketHandler(
             session.sendMessage(TextMessage("""{"error": "invalid message format"}"""))
         }
     }
-    private fun handleEditMessage(
-            session: WebSocketSession,
-            userId: Long,
-            node: JsonNode
-        ){
-        val messageId = node.get("payload")?.get("messageId")?.asLong()
-        val content = node.get("payload")?.get("content")?.asString()
-        val conversationId =
-            node.get("payload")?.get("conversationId")?.asLong()
-        if(messageId == null){
+    private fun handleEditMessage(session: WebSocketSession, userId: Long, node: JsonNode) {
+        val messageId = node.get("payload")?.get("messageId")?.asLong() ?: run {
+            session.sendMessage(TextMessage("""{"error": "messageId required"}"""))
+            return
+        }
+        val content = node.get("payload")?.get("content")?.asText()?.trim() ?: run {
+            session.sendMessage(TextMessage("""{"error": "content required"}"""))
+            return
+        }
+        if (content.isEmpty()) {
+            session.sendMessage(TextMessage("""{"error": "content cannot be empty"}"""))
+            return
+        }
+
+        val message = messageRepository.findById(messageId).orElse(null) ?: run {
             session.sendMessage(TextMessage("""{"error": "message not found"}"""))
             return
         }
-        val message = messageRepository.findById(messageId)
-            .orElseThrow { ResourceNotFoundException("Message not found") }
-        val id = message.sender.userId
-        val user= userRepository.findById(userId).orElseThrow { ResourceNotFoundException("user not found") }
-        if(userId!= id)
-        {
-            throw UnauthorizedException("this message is not belongs to this user")
+
+        if (message.sender.userId != userId) {
+            session.sendMessage(TextMessage("""{"error": "not your message"}"""))
+            return
         }
-        if (content != null) {
-            message.content = content
+
+        if (message.isDeleted) {
+            session.sendMessage(TextMessage("""{"error": "cannot edit deleted message"}"""))
+            return
         }
-        val savedMessage =messageRepository.save(message)
-        val editedPacket =objectMapper.writeValueAsString(mapOf(
+
+        message.content = content
+        val saved = messageRepository.save(message)
+
+        // Use conversationId from the saved message — don't trust client
+        val conversationId = saved.conversation.conversationId
+        val sender = userRepository.findById(userId).orElse(null) ?: return
+
+        val packet = objectMapper.writeValueAsString(mapOf(
             "type" to "EDIT_MESSAGE",
             "payload" to mapOf(
-                "messageId" to savedMessage.messageId,
+                "messageId" to saved.messageId,
                 "conversationId" to conversationId,
                 "senderId" to userId,
-                "senderUsername" to user.username,  // add this
-                "content" to savedMessage.content,
-                "timestamp" to savedMessage.sentAt.toString(),
+                "senderUsername" to sender.username,
+                "content" to saved.content,
+                "timestamp" to saved.sentAt.toString(),
                 "isDeleted" to false,
             )
         ))
+
         val members = conversationMemberRepository.findById_ConversationId(conversationId)
         members.forEach { member ->
-            sessionStore.sessions[member.id.userId]?.let { receiverSession ->
-                if (receiverSession.isOpen) {
-                    receiverSession.sendMessage(TextMessage(editedPacket))
-                }
+            SessionStore.sessions[member.id.userId]?.let { s ->
+                if (s.isOpen) s.sendMessage(TextMessage(packet))
             }
         }
-
-
     }
     private fun handleSendMessage(session: WebSocketSession, userId: Long, node: JsonNode) {
         val conversationId = node.get("payload")?.get("conversationId")?.asLong()
