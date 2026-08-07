@@ -9,8 +9,20 @@ import java.util.Optional
 
 @Repository
 interface MessageRepository : JpaRepository<Message, Long> {
-    @Query("SELECT m FROM Message m WHERE m.conversation.conversationId = :conversationId AND m.isDeleted = false AND m.messageId NOT IN (SELECT md.id.messageId FROM MessageDelete md WHERE md.id.userId = :userId)")
-    fun findMessagesForUser(@Param("conversationId") conversationId: Long, @Param("userId") userId: Long): List<Message>
+    @Query("""
+    SELECT m FROM Message m 
+    WHERE m.conversation.conversationId = :conversationId
+    AND NOT EXISTS (
+        SELECT md FROM MessageDelete md 
+        WHERE md.id.messageId = m.messageId 
+        AND md.id.userId = :userId
+    )
+    ORDER BY m.sentAt ASC
+""")
+    fun findMessagesForUser(
+        @Param("conversationId") conversationId: Long,
+        @Param("userId") userId: Long
+    ): List<Message>
     @Query("SELECT m FROM Message m WHERE m.conversation.conversationId = :conversationId AND m.isDeleted = false ORDER BY m.sentAt DESC LIMIT 1")
     fun findLastMessage(@Param("conversationId") conversationId: Long): Optional<Message>
 }

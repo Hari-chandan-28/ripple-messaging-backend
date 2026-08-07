@@ -15,9 +15,12 @@ import com.backend.ripple.ResourceNotFoundException
 import com.backend.ripple.UnauthorizedException
 import com.backend.ripple.friendship.repository.FriendshipRepository
 import com.backend.ripple.message.repository.ConversationRepository
+import com.backend.ripple.message.repository.MessageDeleteRepository
 import com.backend.ripple.message.repository.MessageRepository
 import com.backend.ripple.model.message.ConversationType
 import com.backend.ripple.model.message.Message
+import com.backend.ripple.model.message.MessageDelete
+import com.backend.ripple.model.message.MessageDeleteId
 
 @Service
 class ChatWebSocketHandler(
@@ -27,7 +30,8 @@ class ChatWebSocketHandler(
     private val conversationMemberRepository: ConversationMemberRepository,
     private val conversationRepository: ConversationRepository,
     private val messageRepository: MessageRepository,
-    private val friendshipRepository: FriendshipRepository
+    private val friendshipRepository: FriendshipRepository,
+    private val messageDeleteRepository: MessageDeleteRepository
     ) : TextWebSocketHandler(){
     override fun afterConnectionEstablished(session: WebSocketSession) {
         val userId = session.attributes["userId"] as Long
@@ -53,10 +57,70 @@ class ChatWebSocketHandler(
                 "TYPING" -> handleTyping(session, userId, node)
                 "READ_RECEIPT" -> handleReadReceipt(session, userId, node)
                 "EDIT_MESSAGE" -> handleEditMessage(session, userId, node)
+                "DELETE_MESSAGE" -> handleDeleteMessage(session, userId, node)
                 else -> session.sendMessage(TextMessage("""{"error": "unknown type: $type"}"""))
             }
         } catch (e: Exception) {
             session.sendMessage(TextMessage("""{"error": "invalid message format"}"""))
+        }
+    }
+    private fun handleDeleteMessage(session: WebSocketSession, userId: Long, node: JsonNode) {
+        val messageId = node.get("payload")?.get("messageId")?.asLong() ?: run {
+            session.sendMessage(TextMessage("""{"error": "messageId required"}"""))
+            return
+        }
+        val deleteType = node.get("payload")?.get("deleteType")?.asText() ?: "deleteForMe"
+        val conversationId = node.get("payload")?.get("conversationId")?.asLong() ?: run {
+            session.sendMessage(TextMessage("""{"error": "conversationId required"}"""))
+            return
+        }
+
+        val message = messageRepository.findById(messageId).orElse(null) ?: run {
+            session.sendMessage(TextMessage("""{"error": "message not found"}"""))
+            return
+        }
+
+        if (message.sender.userId != userId) {
+            session.sendMessage(TextMessage("""{"error": "not your message"}"""))
+            return
+        }
+
+        if (deleteType == "deleteForEveryone") {
+            message.isDeleted = true
+            messageRepository.save(message)
+
+            // Broadcast to all members
+            val packet = objectMapper.writeValueAsString(mapOf(
+                "type" to "DELETE_MESSAGE",
+                "payload" to mapOf(
+                    "messageId" to messageId,
+                    "conversationId" to conversationId,
+                    "deleteType" to "deleteForEveryone",
+                )
+            ))
+            val members = conversationMemberRepository.findById_ConversationId(conversationId)
+            members.forEach { member ->
+                SessionStore.sessions[member.id.userId]?.let { s ->
+                    if (s.isOpen) s.sendMessage(TextMessage(packet))
+                }
+            }
+        } else {
+            // deleteForMe — save to message_delete table
+            val user = userRepository.findById(userId).orElse(null) ?: return
+            val deleteId = MessageDeleteId(userId, messageId)
+            if (!messageDeleteRepository.existsById(deleteId)) {
+                messageDeleteRepository.save(MessageDelete(id = deleteId, user = user, message = message))
+            }
+            // Only notify sender — no broadcast needed
+            val packet = objectMapper.writeValueAsString(mapOf(
+                "type" to "DELETE_MESSAGE",
+                "payload" to mapOf(
+                    "messageId" to messageId,
+                    "conversationId" to conversationId,
+                    "deleteType" to "deleteForMe",
+                )
+            ))
+            session.sendMessage(TextMessage(packet))
         }
     }
     private fun handleEditMessage(session: WebSocketSession, userId: Long, node: JsonNode) {

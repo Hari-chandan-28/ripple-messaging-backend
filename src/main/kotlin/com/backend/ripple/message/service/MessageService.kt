@@ -10,6 +10,7 @@ import com.backend.ripple.message.repository.MessageRepository
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import com.backend.ripple.AccessDeniedException
+import com.backend.ripple.UnauthorizedException
 import com.backend.ripple.dto.message.ChatSummaryResponse
 import com.backend.ripple.model.message.Conversation
 import com.backend.ripple.model.message.ConversationMember
@@ -27,7 +28,7 @@ class MessageService(
     private val conversationRepository: ConversationRepository,
     private val conversationMemberRepository: ConversationMemberRepository,
     private val userRepository: UserRepository,
-    private val profileRepository: ProfileRepository
+    private val profileRepository: ProfileRepository,
 ){
     @Transactional(readOnly = true)
     fun getChats(): List<ChatSummaryResponse> {
@@ -100,39 +101,28 @@ class MessageService(
         message.content = newContent
         messageRepository.save(message)
     }
-    fun deleteMessage(messageId: Long, deleteType: String){
+    fun deleteMessage(messageId: Long, deleteType: String) {
         val userId = SecurityContextHolder.getContext().authentication?.principal as Long
-        val user = userRepository.findById(userId).orElseThrow { ResourceNotFoundException("User not found") }
-        val message = messageRepository.findById(messageId).orElseThrow { ResourceNotFoundException("Message not found") }
-        if (message.isDeleted) {
-            return
-        }
-        if(message.sender.userId != userId){
-            if(deleteType == "deleteForEveryone"){
-                throw AccessDeniedException("You can't delete the message")
-            }
-            val delete = MessageDeleteId(userId, messageId)
-            val deleteMessage = MessageDelete(
-                delete,
-                user,
-                message
-            )
-            messageDeleteRepository.save(deleteMessage)
-        }
-        else
-        {
-            if(deleteType == "deleteForEveryone"){
-                message.isDeleted = true
-                messageRepository.save(message)
-            }
-            else{
-                val deleteId = MessageDeleteId(userId, messageId)
-                val deleteRecord = MessageDelete(deleteId, user, message)
-                messageDeleteRepository.save(deleteRecord)
+        val message = messageRepository.findById(messageId)
+            .orElseThrow { ResourceNotFoundException("Message not found") }
+
+        if (deleteType == "deleteForEveryone") {
+            if (message.sender.userId != userId)
+                throw UnauthorizedException("Not your message")
+            message.isDeleted = true
+            messageRepository.save(message)
+        } else {
+            // deleteForMe
+            val user = userRepository.findById(userId)
+                .orElseThrow { ResourceNotFoundException("User not found") }
+            val deleteId = MessageDeleteId(userId, messageId)
+            if (!messageDeleteRepository.existsById(deleteId)) {
+                messageDeleteRepository.save(
+                    MessageDelete(id = deleteId, user = user, message = message)
+                )
             }
         }
-    }
-    fun createConversation(receiverId: Long): Long {
+    }    fun createConversation(receiverId: Long): Long {
         val userId = SecurityContextHolder.getContext().authentication?.principal as Long
         val existing = conversationRepository.findDirectConversation(userId, receiverId)
         if (existing.isPresent) return existing.get().conversationId
