@@ -9,7 +9,8 @@ data class ProfileResponse(
     val profilePic: String?,
     val relationshipStatus: String?,
     val isPrivate: Boolean,
+    val showOnlineStatus: Boolean,
     val friendshipStatus: Int?,
     val isSender: Boolean?,
-    val lastSeen: String?,  // add this
+    val lastSeen: String?,
 )

@@ -35,5 +35,8 @@ class User(
     @Column(name = "last_seen")
     var lastSeen: LocalDateTime? = null,
     @OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
-    var profile: Profile? = null
+    var profile: Profile? = null,
+
+    @Column(nullable = false)
+    var showOnlineStatus: Boolean = true
 )

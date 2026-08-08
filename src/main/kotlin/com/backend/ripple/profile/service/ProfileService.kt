@@ -108,9 +108,10 @@ class ProfileService(
             profilePic = profile.profilePic,
             relationshipStatus = profile.relationshipStatus?.name,
             isPrivate = profile.user.isPrivate,
+            showOnlineStatus = profile.user.showOnlineStatus,
             friendshipStatus = friendshipStatus,
             isSender = isSender,
-            lastSeen = profile.user.lastSeen?.toString(),
+            lastSeen = if (!profile.user.showOnlineStatus) null else profile.user.lastSeen?.toString(),
         )
     }
 }
