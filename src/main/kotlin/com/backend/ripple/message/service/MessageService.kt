@@ -122,7 +122,8 @@ class MessageService(
                 )
             }
         }
-    }    fun createConversation(receiverId: Long): Long {
+    }
+    fun createConversation(receiverId: Long): Long {
         val userId = SecurityContextHolder.getContext().authentication?.principal as Long
         val existing = conversationRepository.findDirectConversation(userId, receiverId)
         if (existing.isPresent) return existing.get().conversationId

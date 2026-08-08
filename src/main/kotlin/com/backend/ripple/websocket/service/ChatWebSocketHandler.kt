@@ -80,16 +80,19 @@ class ChatWebSocketHandler(
             return
         }
 
-        if (message.sender.userId != userId) {
-            session.sendMessage(TextMessage("""{"error": "not your message"}"""))
-            return
-        }
-
         if (deleteType == "deleteForEveryone") {
+            // Only the sender can delete for everyone
+            if (message.sender.userId != userId) {
+                session.sendMessage(TextMessage("""{"error": "only the sender can delete for everyone"}"""))
+                return
+            }
+            if (message.isDeleted) {
+                session.sendMessage(TextMessage("""{"error": "message already deleted"}"""))
+                return
+            }
             message.isDeleted = true
             messageRepository.save(message)
 
-            // Broadcast to all members
             val packet = objectMapper.writeValueAsString(mapOf(
                 "type" to "DELETE_MESSAGE",
                 "payload" to mapOf(
@@ -105,24 +108,38 @@ class ChatWebSocketHandler(
                 }
             }
         } else {
-            // deleteForMe — save to message_delete table
-            val user = userRepository.findById(userId).orElse(null) ?: return
-            val deleteId = MessageDeleteId(userId, messageId)
-            if (!messageDeleteRepository.existsById(deleteId)) {
-                messageDeleteRepository.save(MessageDelete(id = deleteId, user = user, message = message))
-            }
-            // Only notify sender — no broadcast needed
-            val packet = objectMapper.writeValueAsString(mapOf(
-                "type" to "DELETE_MESSAGE",
-                "payload" to mapOf(
-                    "messageId" to messageId,
-                    "conversationId" to conversationId,
-                    "deleteType" to "deleteForMe",
-                )
-            ))
-            session.sendMessage(TextMessage(packet))
+            // deleteForMe — ANY member of the conversation can delete any message for themselves
+            // Verify the user is actually a member of this conversation
+            val isMember = conversationMemberRepository
+                .findById_ConversationId(conversationId)
+                .any { it.id.userId == userId }
+
+            if (!isMember) {
+                session.sendMessage(TextMessage("""{"error": "not a member of this conversation"}"""))
+            return
         }
+
+        val user = userRepository.findById(userId).orElse(null) ?: return
+        val deleteId = MessageDeleteId(userId, messageId)
+
+        if (!messageDeleteRepository.existsById(deleteId)) {
+            messageDeleteRepository.save(
+                MessageDelete(id = deleteId, user = user, message = message)
+            )
+        }
+
+        // Only notify the requesting user — nobody else needs to know
+        val packet = objectMapper.writeValueAsString(mapOf(
+            "type" to "DELETE_MESSAGE",
+            "payload" to mapOf(
+                "messageId" to messageId,
+                "conversationId" to conversationId,
+                "deleteType" to "deleteForMe",
+            )
+        ))
+        session.sendMessage(TextMessage(packet))
     }
+}
     private fun handleEditMessage(session: WebSocketSession, userId: Long, node: JsonNode) {
         val messageId = node.get("payload")?.get("messageId")?.asLong() ?: run {
             session.sendMessage(TextMessage("""{"error": "messageId required"}"""))
