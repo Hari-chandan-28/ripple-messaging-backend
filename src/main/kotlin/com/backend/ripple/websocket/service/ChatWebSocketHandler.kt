@@ -49,10 +49,44 @@ class ChatWebSocketHandler(
         }
         SessionStore.sessions[userId] = session
 
-        // Notify friends this user is now online
+        // Notify friends this user is online
         notifyOnlineStatus(userId, isOnline = true)
-    }
 
+        // Find all conversations this user is in
+        // For each message not yet delivered, send MESSAGE_DELIVERED to the sender
+        try {
+            val memberships = conversationMemberRepository.findById_UserId(userId)
+            memberships.forEach { membership ->
+                val conversationId = membership.id.conversationId
+                val messages = messageRepository.findMessagesForUser(conversationId, userId)
+                messages.forEach { message ->
+                    // Messages not sent by this user, not yet read by this user
+                    if (message.sender.userId != userId &&
+                        !message.isDeleted &&
+                        !messageReadRepository.existsById_MessageIdAndId_UserId(message.messageId, userId)
+                    ) {
+                        // Notify sender that message is now delivered (they are online)
+                        val senderSession = SessionStore.sessions[message.sender.userId]
+                        if (senderSession?.isOpen == true) {
+                            val packet = objectMapper.writeValueAsString(mapOf(
+                                "type" to "MESSAGE_DELIVERED",
+                                "payload" to mapOf(
+                                    "messageId" to message.messageId,
+                                    "conversationId" to conversationId,
+                                    "deliveredAt" to message.sentAt.toString(),
+                                    "content" to message.content,
+                                    "tickStatus" to "delivered",
+                                )
+                            ))
+                            senderSession.sendMessage(TextMessage(packet))
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            println("Failed to send delivery receipts on connect: ${e.message}")
+        }
+    }
     override fun afterConnectionClosed(session: WebSocketSession, status: CloseStatus) {
         val userId = session.attributes["userId"] as? Long ?: return
         SessionStore.sessions.remove(userId)
