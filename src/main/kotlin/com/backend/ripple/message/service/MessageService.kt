@@ -35,47 +35,53 @@ class MessageService(
     @Transactional(readOnly = true)
     fun getChats(): List<ChatSummaryResponse> {
         val userId = SecurityContextHolder.getContext().authentication?.principal as Long
-        val user = userRepository.findById(userId).orElseThrow { ResourceNotFoundException("User not found") }
-        // TODO: optimize with a single JOIN query when performance becomes a concern
-        return conversationMemberRepository.findById_UserId(userId).map { member ->
-            val conversation = member.conversation
-            val lastMessage = messageRepository.findLastMessage(conversation.conversationId).orElse(null)
+        val memberships = conversationMemberRepository.findById_UserId(userId)
+
+        return memberships.map { membership ->
+            val conversation = membership.conversation
+            val allMessages = messageRepository.findMessagesForUser(conversation.conversationId, userId)
+            val lastMessage = allMessages.lastOrNull()
+
+            // Count messages not sent by me and not in message_read table
+            val unreadCount = allMessages.count { msg ->
+                msg.sender.userId != userId &&
+                        !msg.isDeleted &&
+                        !messageReadRepository.existsById_MessageIdAndId_UserId(msg.messageId, userId)
+            }
+
             if (conversation.type == ConversationType.GROUP) {
                 ChatSummaryResponse(
                     conversationId = conversation.conversationId,
                     type = ConversationType.GROUP,
                     groupId = conversation.group?.groupId,
                     name = conversation.group?.name ?: "Group",
-                    profilePic =conversation.group?.profilePic, // add group pic field to Group entity if needed
+                    profilePic = conversation.group?.profilePic,
                     description = conversation.group?.description,
-                    lastMessage = lastMessage?.content,
-                    lastMessageAt = lastMessage?.sentAt?.toString()
+                    lastMessage = if (lastMessage?.isDeleted == true) "This message was deleted" else lastMessage?.content,
+                    lastMessageAt = lastMessage?.sentAt?.toString(),
+                    unreadCount = unreadCount,
+                    lastSenderId = lastMessage?.sender?.userId,
                 )
             } else {
-                // direct chat — find the other person
                 val otherMember = conversationMemberRepository
                     .findById_ConversationId(conversation.conversationId)
                     .firstOrNull { it.id.userId != userId }
-
-                val otherUser = otherMember?.let {
-                    userRepository.findById(it.id.userId).orElse(null)
-                }
-                val otherProfile = otherUser?.let {
-                    profileRepository.findByUserId(it.userId).orElse(null)
-                }
-
+                val otherUser = otherMember?.user
+                val profile = otherUser?.profile
                 ChatSummaryResponse(
                     conversationId = conversation.conversationId,
-                    type = conversation.type,
-                    name = otherProfile?.name ?: otherUser?.username ?: "Unknown",
-                    senderId = userId,
-                    receiverId = otherUser?.userId,
-                    profilePic = otherProfile?.profilePic,
-                    lastMessage = lastMessage?.content,
-                    lastMessageAt = lastMessage?.sentAt?.toString()
+                    type = ConversationType.PRIVATE,
+                    groupId = null,
+                    name = profile?.name ?: otherUser?.username ?: "Unknown",
+                    profilePic = profile?.profilePic,
+                    description = null,
+                    lastMessage = if (lastMessage?.isDeleted == true) "This message was deleted" else lastMessage?.content,
+                    lastMessageAt = lastMessage?.sentAt?.toString(),
+                    unreadCount = unreadCount,
+                    lastSenderId = lastMessage?.sender?.userId,
                 )
             }
-        }
+        }.sortedByDescending { it.lastMessageAt }
     }
     @Transactional
     fun getMessages(conversationId: Long): List<MessageResponse> {

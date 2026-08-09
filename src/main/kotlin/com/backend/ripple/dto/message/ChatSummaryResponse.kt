@@ -12,5 +12,7 @@ data class ChatSummaryResponse(
     val name: String,
     val profilePic: String?,
     val lastMessage: String?,
-    val lastMessageAt: String?
+    val lastMessageAt: String?,
+    val unreadCount: Int,  // ADD THIS
+    val lastSenderId: Long?,  // ADD THIS — who sent last message
 )
