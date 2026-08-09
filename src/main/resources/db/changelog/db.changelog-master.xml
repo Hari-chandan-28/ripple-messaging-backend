@@ -14,6 +14,7 @@
     <include file="db/changelog/changes/008-create-message-table.xml"/>
     <include file="db/changelog/changes/009-create-message-delete-table.xml"/>
     <include file="db/changelog/changes/010_add_group_profile_pic.xml"/>
+    <include file="db/changelog/changes/011_message_read_table.xml"/>
     <include file="db/changelog/changes/012_message_delete_table.xml"/>
     <include file="db/changelog/changes/013_user_show_online_status.xml"/>
 </databaseChangeLog>

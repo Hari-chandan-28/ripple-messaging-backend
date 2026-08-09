@@ -49,15 +49,14 @@ class AuthController (private val authService: AuthService, private val userRepo
 
     data class OnlineStatusRequest(val showOnlineStatus: Boolean)
     @GetMapping("/online-status")
-    fun getOnlineStatus(@RequestParam userIds: List<Long>): ResponseEntity<Map<Long, Boolean>> {
-        val result = userIds.associateWith { id ->
+    fun getOnlineStatus(@RequestParam userIds: List<Long>): ResponseEntity<Map<Long, Any>> {
+        val result = userIds.associate { id ->
             val user = userRepository.findById(id).orElse(null)
-            // Only show online if user has showOnlineStatus enabled
-            if (user?.showOnlineStatus == true) {
+            val isOnline = if (user?.showOnlineStatus == true) {
                 SessionStore.sessions[id]?.isOpen == true
-            } else {
-                false // hide online status
-            }
+            } else false
+            val lastSeen = if (user?.showOnlineStatus == true) user.lastSeen?.toString() else null
+            id to mapOf("isOnline" to isOnline, "lastSeen" to lastSeen)
         }
         return ResponseEntity.ok(result)
     }

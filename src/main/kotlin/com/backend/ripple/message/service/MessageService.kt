@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service
 import com.backend.ripple.AccessDeniedException
 import com.backend.ripple.UnauthorizedException
 import com.backend.ripple.dto.message.ChatSummaryResponse
+import com.backend.ripple.message.repository.MessageReadRepository
 import com.backend.ripple.model.message.Conversation
 import com.backend.ripple.model.message.ConversationMember
 import com.backend.ripple.model.message.ConversationMemberId
@@ -29,6 +30,7 @@ class MessageService(
     private val conversationMemberRepository: ConversationMemberRepository,
     private val userRepository: UserRepository,
     private val profileRepository: ProfileRepository,
+    private val messageReadRepository: MessageReadRepository,
 ){
     @Transactional(readOnly = true)
     fun getChats(): List<ChatSummaryResponse> {
@@ -78,16 +80,22 @@ class MessageService(
     @Transactional
     fun getMessages(conversationId: Long): List<MessageResponse> {
         val userId = SecurityContextHolder.getContext().authentication?.principal as Long
-        val messages = messageRepository.findMessagesForUser(conversationId, userId)
-        return messages.map { message ->
+        val members = conversationMemberRepository.findById_ConversationId(conversationId)
+        val totalMembers = members.size
+
+        return messageRepository.findMessagesForUser(conversationId, userId).map { message ->
+            val readCount = messageReadRepository.countByMessage_MessageId(message.messageId).toInt()
+            val allRead = readCount >= totalMembers - 1
+
             MessageResponse(
                 convId = conversationId,
                 messageId = message.messageId,
                 senderId = message.sender.userId,
-                senderUsername = message.sender.username,  // add this
+                senderUsername = message.sender.username,
                 content = message.content,
                 sendAt = message.sentAt.toString(),
-                isDeleted = message.isDeleted
+                isDeleted = message.isDeleted,
+                isRead = allRead,
             )
         }
     }
