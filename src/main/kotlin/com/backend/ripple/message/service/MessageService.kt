@@ -102,6 +102,7 @@ class MessageService(
                 sendAt = message.sentAt.toString(),
                 isDeleted = message.isDeleted,
                 isRead = allRead,
+                isEdited = message.isEdited
             )
         }
     }

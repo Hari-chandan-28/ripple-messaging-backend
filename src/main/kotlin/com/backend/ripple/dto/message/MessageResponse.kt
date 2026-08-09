@@ -11,4 +11,5 @@ data class MessageResponse(
     val sendAt: String,
     val isDeleted: Boolean,
     val isRead: Boolean= false,
+    val isEdited: Boolean = false,  // ADD THIS
 )

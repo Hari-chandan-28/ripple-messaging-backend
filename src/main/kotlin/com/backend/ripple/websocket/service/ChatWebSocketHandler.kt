@@ -346,10 +346,10 @@ class ChatWebSocketHandler(
         }
 
         message.content = content
+        message.isEdited = true
         val saved = messageRepository.save(message)
         val conversationId = saved.conversation.conversationId
         val sender = userRepository.findById(userId).orElse(null) ?: return
-
         val packet = objectMapper.writeValueAsString(mapOf(
             "type" to "EDIT_MESSAGE",
             "payload" to mapOf(

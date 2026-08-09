@@ -17,4 +17,5 @@
     <include file="db/changelog/changes/011_message_read_table.xml"/>
     <include file="db/changelog/changes/012_message_delete_table.xml"/>
     <include file="db/changelog/changes/013_user_show_online_status.xml"/>
+    <include file="db/changelog/changes/014_message_is_edited.xml"/>
 </databaseChangeLog>
